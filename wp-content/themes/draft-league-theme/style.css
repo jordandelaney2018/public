@@ -1,0 +1,118 @@
+/*
+Theme Name: Draft League Theme
+Theme URI: https://draftleague.uk/
+Author: Draft League
+Description: Classic custom theme for Draft League Hub.
+Requires at least: 6.7
+Tested up to: 7.0
+Requires PHP: 7.2
+Version: 0.1.0
+Text Domain: draft-league-theme
+*/
+
+:root {
+	--dl-theme-bg: #f7f7f4;
+	--dl-theme-text: #111827;
+	--dl-theme-muted: #64748b;
+	--dl-theme-line: #d8ded6;
+	--dl-theme-accent: #006c4f;
+}
+
+body {
+	margin: 0;
+	background: var(--dl-theme-bg);
+	color: var(--dl-theme-text);
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+	color: inherit;
+}
+
+.dl-site-header,
+.dl-site-footer {
+	border-color: var(--dl-theme-line);
+	border-style: solid;
+}
+
+.dl-site-header {
+	border-width: 0 0 1px;
+	background: #fff;
+}
+
+.dl-site-footer {
+	border-width: 1px 0 0;
+	margin-top: 56px;
+	background: #fff;
+}
+
+.dl-site-shell {
+	box-sizing: border-box;
+	width: min(1180px, 100%);
+	margin: 0 auto;
+	padding: 0 24px;
+}
+
+.dl-site-header__inner,
+.dl-site-footer__inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	padding: 18px 0;
+}
+
+.dl-site-brand {
+	font-size: 1.05rem;
+	font-weight: 800;
+	text-decoration: none;
+}
+
+.dl-site-nav ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 18px;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dl-site-nav a {
+	color: var(--dl-theme-muted);
+	font-size: 0.95rem;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.dl-site-nav a:hover,
+.dl-site-nav .current-menu-item > a,
+.dl-site-nav .current_page_item > a {
+	color: var(--dl-theme-accent);
+}
+
+.dl-site-main {
+	min-height: 60vh;
+}
+
+.dl-content {
+	padding-top: 40px;
+	padding-bottom: 40px;
+}
+
+.dl-content article {
+	margin-bottom: 40px;
+}
+
+.dl-site-footer {
+	color: var(--dl-theme-muted);
+	font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+	.dl-site-header__inner,
+	.dl-site-footer__inner {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}

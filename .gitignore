@@ -9,6 +9,10 @@ wp-content/*
 wp-content/plugins/*
 !wp-content/plugins/draft-league-hub/
 !wp-content/plugins/draft-league-hub/**
+!wp-content/themes/
+wp-content/themes/*
+!wp-content/themes/draft-league-theme/
+!wp-content/themes/draft-league-theme/**
 
 # Local WordPress/runtime files.
 wp-config.php
