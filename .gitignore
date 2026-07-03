@@ -1,0 +1,36 @@
+# Track this repo as the draft league plugin, not a full WordPress install.
+/*
+
+!.gitignore
+!.gitattributes
+!wp-content/
+wp-content/*
+!wp-content/plugins/
+wp-content/plugins/*
+!wp-content/plugins/draft-league-hub/
+!wp-content/plugins/draft-league-hub/**
+
+# Local WordPress/runtime files.
+wp-config.php
+.htaccess
+local-*.php
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/cache/
+wp-content/debug.log
+wp-content/*.log
+
+# Dependencies and generated output.
+vendor/
+node_modules/
+dist/
+build/
+coverage/
+
+# OS/editor noise.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
