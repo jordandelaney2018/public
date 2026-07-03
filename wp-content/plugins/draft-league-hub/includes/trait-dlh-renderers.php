@@ -1,0 +1,271 @@
+<?php
+if (!defined('ABSPATH')) {
+	exit;
+}
+
+trait DLH_Renderers {
+
+
+	private function render_news_cards($count) {
+		$query = new WP_Query(
+			array(
+				'post_type' => 'dlh_news',
+				'post_status' => 'publish',
+				'posts_per_page' => max(1, $count),
+			)
+		);
+
+		ob_start();
+		echo '<div class="dlh-card-grid">';
+		if ($query->have_posts()) {
+			while ($query->have_posts()) {
+				$query->the_post();
+				echo '<article class="dlh-card">';
+				if (has_post_thumbnail()) {
+					echo '<a class="dlh-card__image" href="' . esc_url(get_permalink()) . '">' . get_the_post_thumbnail(get_the_ID(), 'medium_large') . '</a>';
+				}
+				echo '<div class="dlh-card__body">';
+				echo '<p class="dlh-kicker">' . esc_html(get_the_date()) . '</p>';
+				echo '<h3><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></h3>';
+				echo '<p>' . esc_html(wp_trim_words(get_the_excerpt() ? get_the_excerpt() : wp_strip_all_tags(get_the_content()), 24)) . '</p>';
+				echo '</div></article>';
+			}
+			wp_reset_postdata();
+		} else {
+			echo '<div class="dlh-empty">' . esc_html__('No league news yet. Add a story under League News in the dashboard.', 'draft-league-hub') . '</div>';
+		}
+		echo '</div>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_vote_results($questions, $votes) {
+		if (empty($votes)) {
+			return '<div class="dlh-empty">' . esc_html__('No votes submitted yet.', 'draft-league-hub') . '</div>';
+		}
+
+		ob_start();
+		echo '<div class="dlh-result-grid">';
+		foreach ($questions as $question) {
+			$key = sanitize_key($question['key'] ?? '');
+			$type = $this->normalize_question_type($question['type'] ?? 'text');
+			$counts = array();
+
+			foreach ($votes as $vote) {
+				$value = $vote['answers'][$key]['value'] ?? '';
+				if ('' === $value || 0 === $value) {
+					continue;
+				}
+
+				$label = 'manager' === $type ? $this->manager_name(absint($value)) : sanitize_text_field($value);
+				if (!$label) {
+					continue;
+				}
+
+				if (!isset($counts[$label])) {
+					$counts[$label] = 0;
+				}
+				$counts[$label]++;
+			}
+
+			arsort($counts);
+			echo '<div class="dlh-result-card">';
+			echo '<h4>' . esc_html($question['label'] ?? '') . '</h4>';
+			if (empty($counts)) {
+				echo '<p>' . esc_html__('No nominations yet.', 'draft-league-hub') . '</p>';
+			} else {
+				echo '<ol>';
+				foreach ($counts as $label => $count) {
+					echo '<li><span>' . esc_html($label) . '</span><strong>' . esc_html($count) . '</strong></li>';
+				}
+				echo '</ol>';
+			}
+			echo '</div>';
+		}
+		echo '</div>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_sidebet_card($post_id) {
+		$manager_a = absint(get_post_meta($post_id, 'dlh_manager_a', true));
+		$manager_b = absint(get_post_meta($post_id, 'dlh_manager_b', true));
+		$winner = absint(get_post_meta($post_id, 'dlh_winner', true));
+		$status = get_post_meta($post_id, 'dlh_status', true);
+		$stake = get_post_meta($post_id, 'dlh_stake', true);
+		$due_date = get_post_meta($post_id, 'dlh_due_date', true);
+		$stipulation = get_post_meta($post_id, 'dlh_stipulation', true);
+		$statuses = $this->sidebet_statuses();
+
+		ob_start();
+		echo '<article class="dlh-card dlh-sidebet">';
+		echo '<div class="dlh-card__body">';
+		echo '<div class="dlh-card__meta"><span class="dlh-pill">' . esc_html($statuses[$status] ?? __('Active', 'draft-league-hub')) . '</span>';
+		if ($due_date) {
+			echo '<span>' . esc_html(mysql2date(get_option('date_format'), $due_date)) . '</span>';
+		}
+		echo '</div>';
+		echo '<h3>' . esc_html(get_the_title($post_id)) . '</h3>';
+		echo '<p>' . esc_html($stipulation) . '</p>';
+		echo '<dl class="dlh-mini-list">';
+		echo '<div><dt>' . esc_html__('Managers', 'draft-league-hub') . '</dt><dd>' . esc_html($this->manager_name($manager_a)) . ' vs ' . esc_html($this->manager_name($manager_b)) . '</dd></div>';
+		echo '<div><dt>' . esc_html__('Stake', 'draft-league-hub') . '</dt><dd>' . esc_html($stake) . '</dd></div>';
+		if ($winner) {
+			echo '<div><dt>' . esc_html__('Winner', 'draft-league-hub') . '</dt><dd>' . esc_html($this->manager_name($winner)) . '</dd></div>';
+		}
+		echo '</dl>';
+		echo '</div></article>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_poll($post_id) {
+		$options = get_post_meta($post_id, 'dlh_options', true);
+		$options = is_array($options) ? $options : array();
+		$responses = get_post_meta($post_id, 'dlh_responses', true);
+		$responses = is_array($responses) ? $responses : array();
+		$user_response = is_user_logged_in() ? ($responses[get_current_user_id()] ?? array()) : array();
+
+		ob_start();
+		echo '<article class="dlh-panel">';
+		echo '<div class="dlh-section__head"><div><h3>' . esc_html(get_the_title($post_id)) . '</h3>';
+		if (get_post_field('post_content', $post_id)) {
+			echo '<p>' . esc_html(wp_strip_all_tags(get_post_field('post_content', $post_id))) . '</p>';
+		}
+		echo '</div><span class="dlh-pill">' . esc_html(sprintf(_n('%d response', '%d responses', count($responses), 'draft-league-hub'), count($responses))) . '</span></div>';
+
+		if (is_user_logged_in()) {
+			echo '<form method="post" action="" class="dlh-availability">';
+			echo '<input type="hidden" name="dlh_action" value="respond_poll">';
+			echo '<input type="hidden" name="poll_id" value="' . esc_attr($post_id) . '">';
+			wp_nonce_field('dlh_respond_poll', 'dlh_nonce');
+			foreach ($options as $index => $label) {
+				$current = $user_response['answers'][$index] ?? 'maybe';
+				echo '<div class="dlh-availability__row">';
+				echo '<strong>' . esc_html($label) . '</strong>';
+				echo '<div class="dlh-segmented">';
+				foreach (array('yes' => __('Yes', 'draft-league-hub'), 'maybe' => __('Maybe', 'draft-league-hub'), 'no' => __('No', 'draft-league-hub')) as $value => $text) {
+					echo '<label><input type="radio" name="availability[' . esc_attr($index) . ']" value="' . esc_attr($value) . '" ' . checked($current, $value, false) . '><span>' . esc_html($text) . '</span></label>';
+				}
+				echo '</div></div>';
+			}
+			echo '<button class="dlh-button" type="submit">' . esc_html__('Save availability', 'draft-league-hub') . '</button>';
+			echo '</form>';
+		} else {
+			echo '<div class="dlh-empty">' . esc_html__('Log in to add your availability.', 'draft-league-hub') . '</div>';
+		}
+
+		if (!empty($responses)) {
+			echo '<div class="dlh-table-wrap"><table class="dlh-table"><thead><tr><th>' . esc_html__('Manager', 'draft-league-hub') . '</th>';
+			foreach ($options as $label) {
+				echo '<th>' . esc_html($label) . '</th>';
+			}
+			echo '</tr></thead><tbody>';
+			foreach ($responses as $response) {
+				echo '<tr><td>' . esc_html($response['user_name'] ?? '') . '</td>';
+				foreach ($options as $index => $label) {
+					$value = $response['answers'][$index] ?? 'maybe';
+					echo '<td><span class="dlh-availability-pill dlh-availability-pill--' . esc_attr($value) . '">' . esc_html(ucfirst($value)) . '</span></td>';
+				}
+				echo '</tr>';
+			}
+			echo '</tbody></table></div>';
+		}
+
+		echo '</article>';
+		return ob_get_clean();
+	}
+
+
+	private function render_standings($details) {
+		$league = $details['league']['name'] ?? '';
+		$entries = $details['league_entries'] ?? array();
+		$entry_map = array();
+		foreach ($entries as $entry) {
+			$id = $entry['id'] ?? ($entry['entry_id'] ?? 0);
+			if ($id) {
+				$entry_map[$id] = $entry;
+			}
+		}
+
+		$standings = $details['standings']['results'] ?? ($details['standings'] ?? array());
+		if (!is_array($standings)) {
+			$standings = array();
+		}
+
+		ob_start();
+		if ($league) {
+			echo '<h3>' . esc_html($league) . '</h3>';
+		}
+
+		if (empty($standings)) {
+			echo '<div class="dlh-empty">' . esc_html__('The API responded, but no standings were available yet.', 'draft-league-hub') . '</div>';
+			return ob_get_clean();
+		}
+
+		echo '<div class="dlh-table-wrap"><table class="dlh-table">';
+		echo '<thead><tr><th>' . esc_html__('Rank', 'draft-league-hub') . '</th><th>' . esc_html__('Team', 'draft-league-hub') . '</th><th>' . esc_html__('Manager', 'draft-league-hub') . '</th><th>' . esc_html__('Points', 'draft-league-hub') . '</th><th>' . esc_html__('Played', 'draft-league-hub') . '</th><th>' . esc_html__('Record', 'draft-league-hub') . '</th></tr></thead><tbody>';
+
+		foreach ($standings as $index => $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+
+			$entry_id = $row['entry'] ?? ($row['entry_id'] ?? ($row['id'] ?? 0));
+			$entry = $entry_id && isset($entry_map[$entry_id]) ? $entry_map[$entry_id] : array();
+			$rank = $row['rank'] ?? ($row['position'] ?? ($index + 1));
+			$team = $row['entry_name'] ?? ($entry['entry_name'] ?? ($entry['name'] ?? __('Unknown team', 'draft-league-hub')));
+			$manager = $row['player_name'] ?? trim(($entry['player_first_name'] ?? '') . ' ' . ($entry['player_last_name'] ?? ''));
+			$points = $row['total'] ?? ($row['points'] ?? ($row['matches_won'] ?? ''));
+			$played = $row['matches_played'] ?? ($row['played'] ?? '');
+			$record_parts = array();
+			foreach (array('matches_won' => 'W', 'matches_drawn' => 'D', 'matches_lost' => 'L') as $key => $label) {
+				if (isset($row[$key])) {
+					$record_parts[] = $label . ':' . $row[$key];
+				}
+			}
+
+			echo '<tr>';
+			echo '<td>' . esc_html($rank) . '</td>';
+			echo '<td>' . esc_html($team) . '</td>';
+			echo '<td>' . esc_html($manager ? $manager : '-') . '</td>';
+			echo '<td>' . esc_html($points) . '</td>';
+			echo '<td>' . esc_html($played) . '</td>';
+			echo '<td>' . esc_html(implode(' ', $record_parts)) . '</td>';
+			echo '</tr>';
+		}
+
+		echo '</tbody></table></div>';
+		echo '<p class="dlh-footnote">' . esc_html__('Data is cached to keep the FPL Draft API happy.', 'draft-league-hub') . '</p>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_notice() {
+		if (empty($_GET['dlh_notice'])) {
+			return;
+		}
+
+		$notice = sanitize_key(wp_unslash($_GET['dlh_notice']));
+		$messages = array(
+			'vote_saved' => __('Vote saved. Democracy survives another month.', 'draft-league-hub'),
+			'vote_closed' => __('That monthly vote is closed.', 'draft-league-hub'),
+			'sidebet_saved' => __('Sidebet added. Receipts have been filed.', 'draft-league-hub'),
+			'poll_saved' => __('Availability poll created.', 'draft-league-hub'),
+			'poll_response_saved' => __('Availability saved.', 'draft-league-hub'),
+			'login_required' => __('Please log in first.', 'draft-league-hub'),
+			'missing_fields' => __('A required field is missing or invalid.', 'draft-league-hub'),
+			'save_failed' => __('Could not save that. Try again in a minute.', 'draft-league-hub'),
+			'invalid_vote' => __('That vote could not be found.', 'draft-league-hub'),
+			'invalid_poll' => __('That poll could not be found.', 'draft-league-hub'),
+		);
+
+		if (isset($messages[$notice])) {
+			echo '<div class="dlh-notice">' . esc_html($messages[$notice]) . '</div>';
+		}
+	}
+}
