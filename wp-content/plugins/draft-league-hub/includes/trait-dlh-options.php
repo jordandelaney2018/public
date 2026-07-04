@@ -15,7 +15,6 @@ trait DLH_Options {
 			'hero_copy' => 'Questionable trades, Als gay, Receipts kept forever.',
 			'fpl_league_id' => '',
 			'cache_minutes' => 30,
-			'live_vote_results' => 1,
 			'sidebets_require_login' => 1,
 			'default_questions' => implode(
 				"\n",

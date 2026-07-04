@@ -64,7 +64,6 @@ trait DLH_Admin {
 			$options['fpl_league_id'] = preg_replace('/[^0-9]/', '', wp_unslash($_POST['fpl_league_id'] ?? ''));
 			$options['cache_minutes'] = max(5, absint($_POST['cache_minutes'] ?? 30));
 			$options['default_questions'] = sanitize_textarea_field(wp_unslash($_POST['default_questions'] ?? ''));
-			$options['live_vote_results'] = !empty($_POST['live_vote_results']) ? 1 : 0;
 			$options['sidebets_require_login'] = !empty($_POST['sidebets_require_login']) ? 1 : 0;
 
 			update_option(self::OPTION, $options);
@@ -127,7 +126,7 @@ trait DLH_Admin {
 					<tr>
 						<th scope="row"><?php echo esc_html__('Front-end behaviour', 'draft-league-hub'); ?></th>
 						<td>
-							<label><input type="checkbox" name="live_vote_results" value="1" <?php checked($options['live_vote_results'], 1); ?>> <?php echo esc_html__('Show vote results before the month closes', 'draft-league-hub'); ?></label><br>
+							<p class="description"><?php echo esc_html__('Monthly vote results are hidden from visitors until voting closes. Admins can always see them.', 'draft-league-hub'); ?></p>
 							<label><input type="checkbox" name="sidebets_require_login" value="1" <?php checked($options['sidebets_require_login'], 1); ?>> <?php echo esc_html__('Require login to add sidebets and availability polls', 'draft-league-hub'); ?></label>
 						</td>
 					</tr>

@@ -38,10 +38,6 @@ trait DLH_Form_Handlers {
 	public function handle_vote_submission() {
 		$this->verify_nonce_or_die('dlh_submit_vote');
 
-		if (!is_user_logged_in()) {
-			$this->redirect_with_notice('login_required');
-		}
-
 		$vote_id = absint($_POST['vote_id'] ?? 0);
 		if (!$vote_id || 'dlh_vote_month' !== get_post_type($vote_id)) {
 			$this->redirect_with_notice('invalid_vote');
@@ -77,12 +73,21 @@ trait DLH_Form_Handlers {
 			);
 		}
 
-		$user = wp_get_current_user();
+		$vote_key = $this->current_vote_key(true);
+		if (!$vote_key) {
+			$this->redirect_with_notice('save_failed');
+		}
+
 		$votes = get_post_meta($vote_id, 'dlh_votes', true);
 		$votes = is_array($votes) ? $votes : array();
-		$votes[$user->ID] = array(
-			'user_id' => $user->ID,
-			'user_name' => $user->display_name,
+		if (is_user_logged_in()) {
+			unset($votes[get_current_user_id()]);
+		}
+
+		$user = wp_get_current_user();
+		$votes[$vote_key] = array(
+			'user_id' => is_user_logged_in() ? $user->ID : 0,
+			'user_name' => is_user_logged_in() ? $user->display_name : __('Anonymous voter', 'draft-league-hub'),
 			'submitted' => current_time('mysql'),
 			'answers' => $answers,
 		);

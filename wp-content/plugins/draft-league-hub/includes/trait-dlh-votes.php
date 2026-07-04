@@ -48,6 +48,7 @@ trait DLH_Votes {
 		$timezone = wp_timezone();
 		$now = new DateTime('now', $timezone);
 		$month_key = $now->format('Y-m');
+		$close = $this->vote_month_close_datetime($now);
 
 		$existing = get_posts(
 			array(
@@ -61,11 +62,14 @@ trait DLH_Votes {
 		);
 
 		if (!empty($existing)) {
-			return absint($existing[0]);
-		}
+			$post_id = absint($existing[0]);
+			$current_close = get_post_meta($post_id, 'dlh_open_until', true);
+			if ($current_close !== $close->format('Y-m-d H:i:s')) {
+				update_post_meta($post_id, 'dlh_open_until', $close->format('Y-m-d H:i:s'));
+			}
 
-		$close = clone $now;
-		$close->modify('last day of this month')->setTime(23, 59, 59);
+			return $post_id;
+		}
 
 		$post_id = wp_insert_post(
 			array(
@@ -84,6 +88,14 @@ trait DLH_Votes {
 		}
 
 		return absint($post_id);
+	}
+
+
+	private function vote_month_close_datetime(DateTime $date) {
+		$close = clone $date;
+		$close->modify('first day of this month')->setTime(23, 59, 59);
+
+		return $close;
 	}
 
 
@@ -110,6 +122,58 @@ trait DLH_Votes {
 			return __('No close date set.', 'draft-league-hub');
 		}
 
-		return sprintf(__('Open until %s', 'draft-league-hub'), mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $close));
+		$formatted_close = mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $close);
+		if ($this->is_vote_closed($vote_id)) {
+			return sprintf(__('Closed on %s', 'draft-league-hub'), $formatted_close);
+		}
+
+		return sprintf(__('Open until %s', 'draft-league-hub'), $formatted_close);
+	}
+
+
+	private function current_vote_key($create = false) {
+		if (is_user_logged_in()) {
+			return 'user_' . get_current_user_id();
+		}
+
+		$cookie_name = 'dlh_voter_id';
+		$voter_id = sanitize_key(wp_unslash($_COOKIE[$cookie_name] ?? ''));
+
+		if (!$voter_id && $create) {
+			$voter_id = str_replace('-', '', wp_generate_uuid4());
+			$cookie_options = array(
+				'expires' => time() + YEAR_IN_SECONDS,
+				'path' => COOKIEPATH ? COOKIEPATH : '/',
+				'secure' => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			);
+			if (COOKIE_DOMAIN) {
+				$cookie_options['domain'] = COOKIE_DOMAIN;
+			}
+
+			setcookie(
+				$cookie_name,
+				$voter_id,
+				$cookie_options
+			);
+			$_COOKIE[$cookie_name] = $voter_id;
+		}
+
+		return $voter_id ? 'anon_' . $voter_id : '';
+	}
+
+
+	private function get_current_vote_from_votes($votes, $vote_key) {
+		if ($vote_key && isset($votes[$vote_key])) {
+			return $votes[$vote_key];
+		}
+
+		if (is_user_logged_in()) {
+			$legacy_key = get_current_user_id();
+			return $votes[$legacy_key] ?? array();
+		}
+
+		return array();
 	}
 }

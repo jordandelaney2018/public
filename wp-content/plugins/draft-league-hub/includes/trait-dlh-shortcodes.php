@@ -58,18 +58,14 @@ trait DLH_Shortcodes {
 
 	public function shortcode_monthly_votes() {
 		$vote_id = $this->ensure_current_vote_month();
-		$options = $this->get_options();
 		$questions = get_post_meta($vote_id, 'dlh_questions', true);
 		$questions = is_array($questions) ? $questions : array();
 		$votes = get_post_meta($vote_id, 'dlh_votes', true);
 		$votes = is_array($votes) ? $votes : array();
-		$user_vote = array();
+		$vote_key = $this->current_vote_key(false);
+		$user_vote = $this->get_current_vote_from_votes($votes, $vote_key);
 
-		if (is_user_logged_in()) {
-			$user_vote = $votes[get_current_user_id()] ?? array();
-		}
-
-		$show_results = !empty($options['live_vote_results']) || $this->is_vote_closed($vote_id) || current_user_can('edit_posts');
+		$show_results = $this->is_vote_closed($vote_id) || current_user_can('edit_posts');
 
 		ob_start();
 		?>
@@ -88,9 +84,7 @@ trait DLH_Shortcodes {
 				</div>
 			<?php endif; ?>
 
-			<?php if (!is_user_logged_in()) : ?>
-				<div class="dlh-empty"><?php echo esc_html__('Log in to submit this month\'s vote.', 'draft-league-hub'); ?></div>
-			<?php elseif ($this->is_vote_closed($vote_id)) : ?>
+			<?php if ($this->is_vote_closed($vote_id)) : ?>
 				<div class="dlh-empty"><?php echo esc_html__('Voting is closed for this month.', 'draft-league-hub'); ?></div>
 			<?php else : ?>
 				<form class="dlh-form" method="post" action="">
