@@ -285,7 +285,9 @@ trait DLH_Renderers {
 	private function render_standings($details, $transactions = array(), $trades = array(), $bootstrap = array()) {
 		$league = $details['league']['name'] ?? '';
 		$entries = $details['league_entries'] ?? array();
-		$entry_map = $this->build_entry_map($entries);
+		$entry_maps = $this->build_entry_maps($entries);
+		$league_entry_map = $entry_maps['league'];
+		$public_entry_map = $entry_maps['public'];
 		$player_map = $this->build_player_map($bootstrap['elements'] ?? array());
 
 		$standings = $details['standings']['results'] ?? ($details['standings'] ?? array());
@@ -303,7 +305,7 @@ trait DLH_Renderers {
 			return ob_get_clean();
 		}
 
-		echo $this->render_fpl_stat_cards($details, $standings, $entry_map, $player_map, $transactions, $trades); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo $this->render_fpl_stat_cards($details, $standings, $league_entry_map, $public_entry_map, $player_map, $transactions, $trades); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		echo '<div class="dlh-table-wrap"><table class="dlh-table">';
 		echo '<thead><tr><th>' . esc_html__('Rank', 'draft-league-hub') . '</th><th>' . esc_html__('Team', 'draft-league-hub') . '</th><th>' . esc_html__('Manager', 'draft-league-hub') . '</th><th>' . esc_html__('GW', 'draft-league-hub') . '</th><th>' . esc_html__('Total', 'draft-league-hub') . '</th></tr></thead><tbody>';
@@ -314,7 +316,7 @@ trait DLH_Renderers {
 			}
 
 			$entry_id = $row['league_entry'] ?? ($row['entry'] ?? ($row['entry_id'] ?? ($row['id'] ?? 0)));
-			$entry = $this->entry_from_map($entry_map, $entry_id);
+			$entry = $this->entry_from_map($league_entry_map, $entry_id);
 			$rank = $row['rank'] ?? ($row['position'] ?? ($index + 1));
 			$team = $row['entry_name'] ?? $this->entry_team_name($entry);
 			$manager = $row['player_name'] ?? $this->entry_manager_name($entry);
@@ -337,7 +339,7 @@ trait DLH_Renderers {
 	}
 
 
-	private function render_fpl_stat_cards($details, $standings, $entry_map, $player_map, $transactions_data, $trades_data) {
+	private function render_fpl_stat_cards($details, $standings, $league_entry_map, $public_entry_map, $player_map, $transactions_data, $trades_data) {
 		$transactions = $transactions_data['transactions'] ?? array();
 		$trades = $trades_data['trades'] ?? array();
 		$accepted_transactions = array_values(
@@ -351,7 +353,7 @@ trait DLH_Renderers {
 		$trade_rows = is_array($trades) ? $trades : array();
 		$cards = array();
 
-		$season_extremes = $this->season_gameweek_extremes($details, $entry_map);
+		$season_extremes = $this->season_gameweek_extremes($details, $public_entry_map);
 		if (!empty($season_extremes['high'])) {
 			$cards[] = array(
 				'label' => __('Season GW High', 'draft-league-hub'),
@@ -370,8 +372,8 @@ trait DLH_Renderers {
 
 		$cards = array_merge(
 			$cards,
-			$this->transaction_stat_cards($accepted_transactions, $entry_map, $player_map),
-			$this->trade_stat_cards($trade_rows, $entry_map, $player_map)
+			$this->transaction_stat_cards($accepted_transactions, $public_entry_map, $player_map),
+			$this->trade_stat_cards($trade_rows, $public_entry_map, $player_map)
 		);
 
 		if (empty($cards)) {
@@ -579,39 +581,26 @@ trait DLH_Renderers {
 	}
 
 
-	private function standings_extreme($standings, $entry_map, $field, $direction) {
-		$winner = null;
-		foreach ($standings as $row) {
-			if (!is_array($row) || !isset($row[$field])) {
-				continue;
-			}
+	private function build_entry_maps($entries) {
+		$maps = array(
+			'league' => array(),
+			'public' => array(),
+		);
 
-			$value = intval($row[$field]);
-			if (null === $winner || ('high' === $direction ? $value > $winner['value'] : $value < $winner['value'])) {
-				$entry = $this->entry_from_map($entry_map, $row['league_entry'] ?? 0);
-				$winner = array(
-					'value' => $value,
-					'name' => $this->entry_team_name($entry),
-				);
-			}
-		}
-
-		return $winner;
-	}
-
-
-	private function build_entry_map($entries) {
-		$map = array();
 		foreach ($entries as $entry) {
-			foreach (array('id', 'entry_id') as $key) {
-				$id = absint($entry[$key] ?? 0);
-				if ($id) {
-					$map[$id] = $entry;
-				}
+			$league_entry_id = absint($entry['id'] ?? 0);
+			$public_entry_id = absint($entry['entry_id'] ?? 0);
+
+			if ($league_entry_id) {
+				$maps['league'][$league_entry_id] = $entry;
+			}
+
+			if ($public_entry_id) {
+				$maps['public'][$public_entry_id] = $entry;
 			}
 		}
 
-		return $map;
+		return $maps;
 	}
 
 
