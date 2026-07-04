@@ -33,7 +33,6 @@ if (file_exists($draft_league_logo_file)) {
 	<div class="dl-site-shell dl-site-header__inner">
 		<a class="dl-site-brand" href="<?php echo esc_url(home_url('/')); ?>">
 			<img class="dl-site-brand__logo" src="<?php echo esc_url($draft_league_logo_url); ?>" alt="">
-			<span><?php echo esc_html(draft_league_theme_site_name()); ?></span>
 		</a>
 
 		<button class="dl-menu-toggle" type="button" aria-controls="dl-primary-menu" aria-expanded="false">

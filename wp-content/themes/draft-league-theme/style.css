@@ -95,19 +95,19 @@ a {
 .dl-site-brand {
 	align-items: center;
 	display: inline-flex;
-	gap: 0.75rem;
 	color: #ffffff;
 	font-size: 1.05rem;
 	font-weight: 800;
+	line-height: 0;
 	text-decoration: none;
 }
 
 .dl-site-brand__logo {
 	display: block;
 	filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
-	height: 54px;
+	height: 72px;
 	object-fit: contain;
-	width: 54px;
+	width: 72px;
 }
 
 .dl-menu-toggle {
@@ -254,7 +254,7 @@ a {
 	}
 
 	.dl-site-brand__logo {
-		height: 46px;
-		width: 46px;
+		height: 60px;
+		width: 60px;
 	}
 }
