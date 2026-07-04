@@ -27,12 +27,12 @@ add_action(
 add_action(
 	'wp_enqueue_scripts',
 	function () {
-		wp_enqueue_style('draft-league-theme', get_stylesheet_uri(), array(), '0.1.1');
+		wp_enqueue_style('draft-league-theme', get_stylesheet_uri(), array(), '0.1.2');
 		wp_enqueue_script(
 			'draft-league-theme-navigation',
 			get_stylesheet_directory_uri() . '/assets/navigation.js',
 			array(),
-			'0.1.1',
+			'0.1.2',
 			true
 		);
 	}

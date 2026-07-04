@@ -19,11 +19,21 @@ if (!defined('ABSPATH')) {
 
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
+<?php
+$draft_league_logo_path = '/assets/images/draft-league-logo.png';
+$draft_league_logo_file = get_stylesheet_directory() . $draft_league_logo_path;
+$draft_league_logo_url = get_stylesheet_directory_uri() . $draft_league_logo_path;
+
+if (file_exists($draft_league_logo_file)) {
+	$draft_league_logo_url = add_query_arg('ver', filemtime($draft_league_logo_file), $draft_league_logo_url);
+}
+?>
 
 <header class="dl-site-header">
 	<div class="dl-site-shell dl-site-header__inner">
 		<a class="dl-site-brand" href="<?php echo esc_url(home_url('/')); ?>">
-			<?php echo esc_html(draft_league_theme_site_name()); ?>
+			<img class="dl-site-brand__logo" src="<?php echo esc_url($draft_league_logo_url); ?>" alt="">
+			<span><?php echo esc_html(draft_league_theme_site_name()); ?></span>
 		</a>
 
 		<button class="dl-menu-toggle" type="button" aria-controls="dl-primary-menu" aria-expanded="false">

@@ -1,13 +1,15 @@
 .dlh-wrap {
-	--dlh-ink: #191b1f;
-	--dlh-muted: #62666f;
-	--dlh-line: #d8dde5;
-	--dlh-paper: #ffffff;
-	--dlh-soft: #f4f6f8;
-	--dlh-green: #0f7b52;
+	--dlh-ink: #071827;
+	--dlh-muted: #536171;
+	--dlh-line: #d7c99a;
+	--dlh-paper: #fffdf7;
+	--dlh-soft: #f6edd3;
+	--dlh-navy: #061421;
+	--dlh-green: #07542f;
 	--dlh-red: #a83232;
-	--dlh-gold: #a36a00;
-	--dlh-charcoal: #262b2f;
+	--dlh-gold: #d8a928;
+	--dlh-gold-bright: #f3c94d;
+	--dlh-charcoal: #061421;
 	color: var(--dlh-ink);
 	margin-inline: auto;
 	max-width: 1120px;
@@ -22,8 +24,9 @@
 .dlh-hero {
 	align-items: stretch;
 	background:
-		radial-gradient(circle at 18% 20%, rgba(213, 168, 79, 0.2), transparent 28%),
-		linear-gradient(135deg, #1f2529, var(--dlh-charcoal));
+		radial-gradient(circle at 16% 20%, rgba(243, 201, 77, 0.2), transparent 30%),
+		linear-gradient(135deg, var(--dlh-navy), #092a25 52%, var(--dlh-green));
+	border: 1px solid rgba(216, 169, 40, 0.5);
 	border-radius: 8px;
 	color: #ffffff;
 	display: grid;
@@ -73,9 +76,9 @@
 .dlh-hero__panel {
 	align-content: end;
 	background:
-		linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)),
+		linear-gradient(rgba(243, 201, 77, 0.09), rgba(255, 255, 255, 0.03)),
 		repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 12px);
-	border-left: 1px solid rgba(255, 255, 255, 0.16);
+	border-left: 1px solid rgba(243, 201, 77, 0.28);
 	display: grid;
 	gap: 0.75rem;
 	padding: clamp(1.25rem, 4vw, 2rem);
@@ -85,7 +88,7 @@
 
 .dlh-hero__panel span,
 .dlh-kicker {
-	color: #d5a84f;
+	color: var(--dlh-gold-bright);
 	font-size: 0.75rem;
 	font-weight: 800;
 	letter-spacing: 0;
@@ -118,8 +121,8 @@
 .dlh-wrap a.dlh-button {
 	align-items: center;
 	appearance: none;
-	background: #ffffff;
-	border: 1px solid var(--dlh-ink);
+	background: #fffdf7;
+	border: 1px solid rgba(6, 20, 33, 0.78);
 	border-radius: 6px;
 	color: var(--dlh-ink);
 	cursor: pointer;
@@ -136,8 +139,8 @@
 
 .dlh-button:hover,
 .dlh-button:focus-visible {
-	background: #d5a84f;
-	color: #151515;
+	background: var(--dlh-gold-bright);
+	color: var(--dlh-navy);
 	transform: translateY(-1px);
 }
 
@@ -169,6 +172,7 @@
 }
 
 .dlh-section__head a {
+	color: var(--dlh-green);
 	font-weight: 800;
 }
 
@@ -187,6 +191,7 @@
 	background: var(--dlh-paper);
 	border: 1px solid var(--dlh-line);
 	border-radius: 8px;
+	box-shadow: 0 14px 30px rgba(6, 20, 33, 0.06);
 }
 
 .dlh-card {
@@ -261,9 +266,9 @@
 }
 
 .dlh-notice {
-	background: #f0f7f3;
-	border-color: #b8d9c5;
-	color: #174f35;
+	background: #edf7ef;
+	border-color: #a9d6b1;
+	color: #07542f;
 	font-weight: 700;
 }
 
@@ -352,7 +357,7 @@
 }
 
 .dlh-result-card strong {
-	background: var(--dlh-ink);
+	background: var(--dlh-navy);
 	border-radius: 999px;
 	color: #ffffff;
 	min-width: 2rem;
@@ -374,7 +379,7 @@
 }
 
 .dlh-receipts blockquote {
-	border-left: 3px solid #d5a84f;
+	border-left: 3px solid var(--dlh-gold);
 	margin: 0.75rem 0 0;
 	padding-left: 0.75rem;
 }
@@ -531,7 +536,7 @@
 }
 
 .dlh-segmented input:checked + span {
-	background: var(--dlh-ink);
+	background: var(--dlh-navy);
 	color: #ffffff;
 }
 
