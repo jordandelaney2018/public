@@ -22,11 +22,11 @@ trait DLH_Renderers {
 				$query->the_post();
 				echo '<article class="dlh-card">';
 				if (has_post_thumbnail()) {
-					echo '<a class="dlh-card__image" href="' . esc_url(get_permalink()) . '">' . get_the_post_thumbnail(get_the_ID(), 'medium_large') . '</a>';
+					echo '<div class="dlh-card__image">' . get_the_post_thumbnail(get_the_ID(), 'medium_large') . '</div>';
 				}
 				echo '<div class="dlh-card__body">';
 				echo '<p class="dlh-kicker">' . esc_html(get_the_date()) . '</p>';
-				echo '<h3><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></h3>';
+				echo '<h3>' . esc_html(get_the_title()) . '</h3>';
 				echo '<p>' . esc_html(wp_trim_words(get_the_excerpt() ? get_the_excerpt() : wp_strip_all_tags(get_the_content()), 24)) . '</p>';
 				echo '</div></article>';
 			}
