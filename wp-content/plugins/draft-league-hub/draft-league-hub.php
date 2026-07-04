@@ -54,18 +54,21 @@ final class DLH_Plugin {
 
 	private function __construct() {
 		add_action('init', array($this, 'register_post_types'));
+		add_action('init', array($this, 'maybe_upgrade_content'), 30);
 		add_action('init', array($this, 'maybe_handle_frontend_posts'), 20);
 		add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
 		add_action('admin_menu', array($this, 'admin_menu'));
 		add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
 		add_action('save_post_dlh_manager', array($this, 'save_manager_meta'));
 		add_action('save_post_dlh_sidebet', array($this, 'save_sidebet_meta'));
+		add_action('save_post_dlh_hof_entry', array($this, 'save_hall_of_fame_meta'));
 		add_action(self::CRON_HOOK, array($this, 'daily_maintenance'));
 
 		add_shortcode('dlh_home', array($this, 'shortcode_home'));
 		add_shortcode('dlh_news', array($this, 'shortcode_news'));
 		add_shortcode('dlh_monthly_votes', array($this, 'shortcode_monthly_votes'));
 		add_shortcode('dlh_sidebets', array($this, 'shortcode_sidebets'));
+		add_shortcode('dlh_hall_of_fame', array($this, 'shortcode_hall_of_fame'));
 		add_shortcode('dlh_calendar', array($this, 'shortcode_calendar'));
 		add_shortcode('dlh_stats', array($this, 'shortcode_stats'));
 	}

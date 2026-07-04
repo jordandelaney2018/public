@@ -80,10 +80,47 @@ trait DLH_Renderers {
 					echo '<li><span>' . esc_html($label) . '</span><strong>' . esc_html($count) . '</strong></li>';
 				}
 				echo '</ol>';
+				echo $this->render_vote_receipts($key, $type, $votes); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
 			echo '</div>';
 		}
 		echo '</div>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_vote_receipts($key, $type, $votes) {
+		$receipts = array();
+
+		foreach ($votes as $vote) {
+			$answer = $vote['answers'][$key] ?? array();
+			$reason = trim($answer['reason'] ?? '');
+			$value = $answer['value'] ?? '';
+
+			if ('' === $reason || '' === $value || 0 === $value) {
+				continue;
+			}
+
+			$receipts[] = array(
+				'name' => sanitize_text_field($vote['user_name'] ?? __('Someone', 'draft-league-hub')),
+				'value' => 'manager' === $type ? $this->manager_name(absint($value)) : sanitize_text_field($value),
+				'reason' => sanitize_textarea_field($reason),
+			);
+		}
+
+		if (empty($receipts)) {
+			return '';
+		}
+
+		ob_start();
+		echo '<details class="dlh-receipts"><summary>' . esc_html__('Reasons', 'draft-league-hub') . '</summary>';
+		foreach ($receipts as $receipt) {
+			echo '<blockquote><strong>' . esc_html($receipt['value']) . '</strong>';
+			echo '<p>' . esc_html($receipt['reason']) . '</p>';
+			echo '<cite>' . esc_html($receipt['name']) . '</cite></blockquote>';
+		}
+		echo '</details>';
 
 		return ob_get_clean();
 	}
@@ -116,6 +153,67 @@ trait DLH_Renderers {
 			echo '<div><dt>' . esc_html__('Winner', 'draft-league-hub') . '</dt><dd>' . esc_html($this->manager_name($winner)) . '</dd></div>';
 		}
 		echo '</dl>';
+		if (current_user_can('edit_post', $post_id)) {
+			echo $this->render_sidebet_controls($post_id, $status, $winner); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+		echo '</div></article>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_sidebet_controls($post_id, $status, $winner) {
+		ob_start();
+		echo '<form class="dlh-card-actions" method="post" action="">';
+		echo '<input type="hidden" name="dlh_action" value="update_sidebet">';
+		echo '<input type="hidden" name="sidebet_id" value="' . esc_attr($post_id) . '">';
+		wp_nonce_field('dlh_update_sidebet', 'dlh_nonce');
+		echo '<label><span>' . esc_html__('Status', 'draft-league-hub') . '</span><select name="sidebet_status">';
+		foreach ($this->sidebet_statuses() as $key => $label) {
+			echo '<option value="' . esc_attr($key) . '" ' . selected($status, $key, false) . '>' . esc_html($label) . '</option>';
+		}
+		echo '</select></label>';
+		echo '<label><span>' . esc_html__('Winner', 'draft-league-hub') . '</span>' . $this->manager_select('sidebet_winner', $winner, __('No winner yet', 'draft-league-hub')) . '</label>';
+		echo '<button class="dlh-button" type="submit">' . esc_html__('Update', 'draft-league-hub') . '</button>';
+		echo '</form>';
+
+		return ob_get_clean();
+	}
+
+
+	private function render_hall_of_fame_card($post_id) {
+		$media_type = get_post_meta($post_id, 'dlh_media_type', true);
+		$media_type = in_array($media_type, array('image', 'video'), true) ? $media_type : 'image';
+		$media_url = get_post_meta($post_id, 'dlh_media_url', true);
+
+		ob_start();
+		echo '<article class="dlh-card dlh-hof-card">';
+		echo '<div class="dlh-hof-card__media">';
+		if ('video' === $media_type && $media_url) {
+			$embed = wp_oembed_get($media_url);
+			if ($embed) {
+				echo $embed; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			} else {
+				echo '<video controls src="' . esc_url($media_url) . '"></video>';
+			}
+		} elseif (has_post_thumbnail($post_id)) {
+			echo get_the_post_thumbnail($post_id, 'large'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		} elseif ($media_url) {
+			echo '<img src="' . esc_url($media_url) . '" alt="' . esc_attr(get_the_title($post_id)) . '">';
+		} else {
+			echo '<div class="dlh-hof-card__placeholder">' . esc_html__('No media yet', 'draft-league-hub') . '</div>';
+		}
+		echo '</div>';
+		echo '<div class="dlh-card__body">';
+		echo '<p class="dlh-kicker">' . esc_html(get_the_date('', $post_id)) . '</p>';
+		echo '<h3>' . esc_html(get_the_title($post_id)) . '</h3>';
+		$caption = get_the_excerpt($post_id);
+		if (!$caption) {
+			$caption = wp_strip_all_tags(get_post_field('post_content', $post_id));
+		}
+		if ($caption) {
+			echo '<p>' . esc_html(wp_trim_words($caption, 28)) . '</p>';
+		}
 		echo '</div></article>';
 
 		return ob_get_clean();
@@ -255,6 +353,8 @@ trait DLH_Renderers {
 			'vote_saved' => __('Vote saved. Democracy survives another month.', 'draft-league-hub'),
 			'vote_closed' => __('That monthly vote is closed.', 'draft-league-hub'),
 			'sidebet_saved' => __('Sidebet added. Receipts have been filed.', 'draft-league-hub'),
+			'sidebet_updated' => __('Sidebet updated. The record has been amended.', 'draft-league-hub'),
+			'sidebet_update_denied' => __('You cannot update that sidebet.', 'draft-league-hub'),
 			'poll_saved' => __('Availability poll created.', 'draft-league-hub'),
 			'poll_response_saved' => __('Availability saved.', 'draft-league-hub'),
 			'login_required' => __('Please log in first.', 'draft-league-hub'),

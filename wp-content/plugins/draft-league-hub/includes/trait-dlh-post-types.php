@@ -61,6 +61,25 @@ trait DLH_Post_Types {
 		);
 
 		register_post_type(
+			'dlh_hof_entry',
+			array(
+				'labels' => array(
+					'name' => __('Hall of Fame', 'draft-league-hub'),
+					'singular_name' => __('Hall of Fame Entry', 'draft-league-hub'),
+					'add_new_item' => __('Add Hall of Fame Entry', 'draft-league-hub'),
+					'edit_item' => __('Edit Hall of Fame Entry', 'draft-league-hub'),
+				),
+				'public' => true,
+				'show_ui' => true,
+				'show_in_rest' => true,
+				'menu_icon' => 'dashicons-format-gallery',
+				'has_archive' => false,
+				'rewrite' => array('slug' => 'hall-of-fame-entry'),
+				'supports' => array('title', 'editor', 'excerpt', 'thumbnail', 'author'),
+			)
+		);
+
+		register_post_type(
 			'dlh_vote_month',
 			array(
 				'labels' => array(

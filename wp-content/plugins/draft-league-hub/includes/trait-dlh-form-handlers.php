@@ -21,6 +21,10 @@ trait DLH_Form_Handlers {
 			$this->handle_sidebet_submission();
 		}
 
+		if ('update_sidebet' === $action) {
+			$this->handle_sidebet_update();
+		}
+
 		if ('create_poll' === $action) {
 			$this->handle_poll_creation();
 		}
@@ -138,6 +142,25 @@ trait DLH_Form_Handlers {
 		update_post_meta($post_id, 'dlh_submitted_by', get_current_user_id());
 
 		$this->redirect_with_notice('sidebet_saved');
+	}
+
+
+	public function handle_sidebet_update() {
+		$this->verify_nonce_or_die('dlh_update_sidebet');
+
+		$sidebet_id = absint($_POST['sidebet_id'] ?? 0);
+		if (!$sidebet_id || 'dlh_sidebet' !== get_post_type($sidebet_id) || !current_user_can('edit_post', $sidebet_id)) {
+			$this->redirect_with_notice('sidebet_update_denied');
+		}
+
+		$status = sanitize_key(wp_unslash($_POST['sidebet_status'] ?? 'active'));
+		if (!array_key_exists($status, $this->sidebet_statuses())) {
+			$status = 'active';
+		}
+
+		update_post_meta($sidebet_id, 'dlh_status', $status);
+		update_post_meta($sidebet_id, 'dlh_winner', absint($_POST['sidebet_winner'] ?? 0));
+		$this->redirect_with_notice('sidebet_updated');
 	}
 
 

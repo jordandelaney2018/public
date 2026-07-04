@@ -19,7 +19,7 @@ trait DLH_Shortcodes {
 					<p><?php echo esc_html($options['hero_copy']); ?></p>
 					<div class="dlh-actions">
 						<?php foreach ($pages as $key => $page) : ?>
-							<?php if (in_array($key, array('votes', 'sidebets', 'calendar', 'stats'), true)) : ?>
+							<?php if (in_array($key, array('votes', 'sidebets', 'hall_of_fame', 'calendar', 'stats'), true)) : ?>
 								<a class="dlh-button" href="<?php echo esc_url($page['url']); ?>"><?php echo esc_html($page['label']); ?></a>
 							<?php endif; ?>
 						<?php endforeach; ?>
@@ -83,6 +83,11 @@ trait DLH_Shortcodes {
 				</div>
 				<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d vote', '%d votes', count($votes), 'draft-league-hub'), count($votes))); ?></span>
 			</div>
+			<?php if (!empty($user_vote['submitted'])) : ?>
+				<div class="dlh-notice">
+					<?php echo esc_html(sprintf(__('Your vote was last saved on %s.', 'draft-league-hub'), mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $user_vote['submitted']))); ?>
+				</div>
+			<?php endif; ?>
 
 			<?php if (!is_user_logged_in()) : ?>
 				<div class="dlh-empty"><?php echo esc_html__('Log in to submit this month\'s vote.', 'draft-league-hub'); ?></div>
@@ -192,6 +197,46 @@ trait DLH_Shortcodes {
 					<?php wp_reset_postdata(); ?>
 				<?php else : ?>
 					<div class="dlh-empty"><?php echo esc_html__('No sidebets yet. Suspiciously sensible behaviour.', 'draft-league-hub'); ?></div>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+
+	public function shortcode_hall_of_fame($atts = array()) {
+		$atts = shortcode_atts(array('count' => 24), $atts, 'dlh_hall_of_fame');
+		$query = new WP_Query(
+			array(
+				'post_type' => 'dlh_hof_entry',
+				'post_status' => 'publish',
+				'posts_per_page' => max(1, absint($atts['count'])),
+				'orderby' => 'date',
+				'order' => 'DESC',
+			)
+		);
+
+		ob_start();
+		?>
+		<div class="dlh-wrap dlh-section">
+			<div class="dlh-section__head">
+				<div>
+					<h2><?php echo esc_html__('Hall of Fame', 'draft-league-hub'); ?></h2>
+					<p><?php echo esc_html__('The permanent record of league nonsense.', 'draft-league-hub'); ?></p>
+				</div>
+				<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d entry', '%d entries', $query->found_posts, 'draft-league-hub'), $query->found_posts)); ?></span>
+			</div>
+
+			<div class="dlh-hof-grid">
+				<?php if ($query->have_posts()) : ?>
+					<?php while ($query->have_posts()) : ?>
+						<?php $query->the_post(); ?>
+						<?php echo $this->render_hall_of_fame_card(get_the_ID()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php endwhile; ?>
+					<?php wp_reset_postdata(); ?>
+				<?php else : ?>
+					<div class="dlh-empty"><?php echo esc_html__('No Hall of Fame entries yet. The evidence locker is empty.', 'draft-league-hub'); ?></div>
 				<?php endif; ?>
 			</div>
 		</div>

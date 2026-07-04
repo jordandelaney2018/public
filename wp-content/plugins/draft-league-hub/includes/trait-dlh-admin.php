@@ -35,6 +35,15 @@ trait DLH_Admin {
 			'normal',
 			'high'
 		);
+
+		add_meta_box(
+			'dlh_hall_of_fame_media',
+			__('Hall of Fame Media', 'draft-league-hub'),
+			array($this, 'render_hall_of_fame_meta_box'),
+			'dlh_hof_entry',
+			'normal',
+			'high'
+		);
 	}
 
 
@@ -138,6 +147,7 @@ trait DLH_Admin {
 				<li><code>[dlh_news]</code> <?php echo esc_html__('News listing', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_monthly_votes]</code> <?php echo esc_html__('Auto-generated monthly ballot', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_sidebets]</code> <?php echo esc_html__('Sidebet board and submission form', 'draft-league-hub'); ?></li>
+				<li><code>[dlh_hall_of_fame]</code> <?php echo esc_html__('Funny pictures, videos, and receipts', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_calendar]</code> <?php echo esc_html__('Availability poll board', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_stats]</code> <?php echo esc_html__('Cached FPL Draft league standings widget', 'draft-league-hub'); ?></li>
 			</ul>
@@ -195,6 +205,27 @@ trait DLH_Admin {
 	}
 
 
+	public function render_hall_of_fame_meta_box($post) {
+		wp_nonce_field('dlh_save_hall_of_fame_meta', 'dlh_hall_of_fame_nonce');
+
+		$media_type = get_post_meta($post->ID, 'dlh_media_type', true);
+		$media_type = in_array($media_type, array('image', 'video'), true) ? $media_type : 'image';
+		$media_url = get_post_meta($post->ID, 'dlh_media_url', true);
+
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr><th scope="row"><label for="dlh_media_type">' . esc_html__('Media type', 'draft-league-hub') . '</label></th><td><select id="dlh_media_type" name="dlh_media_type">';
+		foreach (array('image' => __('Image', 'draft-league-hub'), 'video' => __('Video', 'draft-league-hub')) as $key => $label) {
+			echo '<option value="' . esc_attr($key) . '" ' . selected($media_type, $key, false) . '>' . esc_html($label) . '</option>';
+		}
+		echo '</select></td></tr>';
+		echo '<tr><th scope="row"><label for="dlh_media_url">' . esc_html__('Media URL', 'draft-league-hub') . '</label></th><td>';
+		echo '<input type="url" class="large-text" id="dlh_media_url" name="dlh_media_url" value="' . esc_attr($media_url) . '">';
+		echo '<p class="description">' . esc_html__('For images you can use the featured image instead. For videos, paste a YouTube, Vimeo, or direct video URL.', 'draft-league-hub') . '</p>';
+		echo '</td></tr>';
+		echo '</table>';
+	}
+
+
 	public function save_manager_meta($post_id) {
 		if (!$this->can_save_post($post_id, 'dlh_manager_nonce', 'dlh_save_manager_meta')) {
 			return;
@@ -225,5 +256,20 @@ trait DLH_Admin {
 			$status = 'active';
 		}
 		update_post_meta($post_id, 'dlh_status', $status);
+	}
+
+
+	public function save_hall_of_fame_meta($post_id) {
+		if (!$this->can_save_post($post_id, 'dlh_hall_of_fame_nonce', 'dlh_save_hall_of_fame_meta')) {
+			return;
+		}
+
+		$media_type = sanitize_key(wp_unslash($_POST['dlh_media_type'] ?? 'image'));
+		if (!in_array($media_type, array('image', 'video'), true)) {
+			$media_type = 'image';
+		}
+
+		update_post_meta($post_id, 'dlh_media_type', $media_type);
+		update_post_meta($post_id, 'dlh_media_url', esc_url_raw(wp_unslash($_POST['dlh_media_url'] ?? '')));
 	}
 }

@@ -51,6 +51,18 @@ trait DLH_Options {
 	}
 
 
+	public function maybe_upgrade_content() {
+		$content_version = get_option('dlh_content_version', '0.1.0');
+		if (version_compare($content_version, '0.2.1', '>=')) {
+			return;
+		}
+
+		$this->create_default_pages();
+		update_option('dlh_content_version', '0.2.1');
+		flush_rewrite_rules(false);
+	}
+
+
 	private function create_default_pages() {
 		$options = $this->get_options();
 		$pages = array(
@@ -58,6 +70,7 @@ trait DLH_Options {
 			'news' => array('title' => 'League News', 'slug' => 'league-newsroom', 'shortcode' => '[dlh_news]'),
 			'votes' => array('title' => 'Monthly Votes', 'slug' => 'monthly-votes', 'shortcode' => '[dlh_monthly_votes]'),
 			'sidebets' => array('title' => 'Sidebets', 'slug' => 'sidebets', 'shortcode' => '[dlh_sidebets]'),
+			'hall_of_fame' => array('title' => 'Hall of Fame', 'slug' => 'hall-of-fame', 'shortcode' => '[dlh_hall_of_fame]'),
 			'calendar' => array('title' => 'Calendar', 'slug' => 'calendar', 'shortcode' => '[dlh_calendar]'),
 			'stats' => array('title' => 'League Stats', 'slug' => 'league-stats', 'shortcode' => '[dlh_stats]'),
 		);
@@ -96,6 +109,7 @@ trait DLH_Options {
 			'news' => __('News', 'draft-league-hub'),
 			'votes' => __('Monthly Votes', 'draft-league-hub'),
 			'sidebets' => __('Sidebets', 'draft-league-hub'),
+			'hall_of_fame' => __('Hall of Fame', 'draft-league-hub'),
 			'calendar' => __('Calendar', 'draft-league-hub'),
 			'stats' => __('Stats', 'draft-league-hub'),
 		);

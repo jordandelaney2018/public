@@ -21,9 +21,6 @@ if (!defined('ABSPATH')) {
 <?php wp_body_open(); ?>
 
 <header class="dl-site-header">
-	<h1 class="dl-site-header__title">
-		TEST
-	</h1>
 	<div class="dl-site-shell dl-site-header__inner">
 		<a class="dl-site-brand" href="<?php echo esc_url(home_url('/')); ?>">
 			<?php echo esc_html(draft_league_theme_site_name()); ?>
