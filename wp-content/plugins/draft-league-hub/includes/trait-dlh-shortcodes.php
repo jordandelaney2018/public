@@ -212,7 +212,7 @@ trait DLH_Shortcodes {
 			<div class="dlh-section__head">
 				<div>
 					<h2><?php echo esc_html__('Hall of Fame', 'draft-league-hub'); ?></h2>
-					<p><?php echo esc_html__('The permanent record of league nonsense.', 'draft-league-hub'); ?></p>
+					<p><?php echo esc_html__('The worst things ever maybe', 'draft-league-hub'); ?></p>
 				</div>
 				<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d entry', '%d entries', $query->found_posts, 'draft-league-hub'), $query->found_posts)); ?></span>
 			</div>
