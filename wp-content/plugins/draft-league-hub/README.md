@@ -8,7 +8,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - League News custom post type for joke stories and matchday slander.
 - Auto-generated monthly vote page.
 - Sidebets page with front-end submissions.
-- Availability poll page for draft nights, calls, and meetups.
+- Calendar page for upcoming draft dates, deadlines, and league events.
 - Cached FPL Draft API standings widget.
 
 ## Install
@@ -27,7 +27,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - `[dlh_news]` - league news listing.
 - `[dlh_monthly_votes]` - current monthly vote.
 - `[dlh_sidebets]` - sidebet board and submission form.
-- `[dlh_calendar]` - availability poll board.
+- `[dlh_calendar]` - upcoming draft dates.
 - `[dlh_stats]` - FPL Draft league standings.
 
 ## FPL Draft API

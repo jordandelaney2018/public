@@ -229,58 +229,45 @@ trait DLH_Shortcodes {
 
 
 	public function shortcode_calendar() {
-		$options = $this->get_options();
-		$require_login = !empty($options['sidebets_require_login']);
 		$query = new WP_Query(
 			array(
-				'post_type' => 'dlh_event_poll',
+				'post_type' => 'dlh_calendar_event',
 				'post_status' => 'publish',
-				'posts_per_page' => 20,
-				'orderby' => 'date',
-				'order' => 'DESC',
+				'posts_per_page' => 30,
+				'meta_key' => 'dlh_event_date',
+				'meta_query' => array(
+					array(
+						'key' => 'dlh_event_date',
+						'value' => current_time('Y-m-d'),
+						'compare' => '>=',
+						'type' => 'DATE',
+					),
+				),
+				'orderby' => 'meta_value',
+				'order' => 'ASC',
 			)
 		);
 
 		ob_start();
 		?>
 		<div class="dlh-wrap dlh-section">
-			<?php $this->render_notice(); ?>
 			<div class="dlh-section__head">
-				<h2><?php echo esc_html__('Calendar & Availability', 'draft-league-hub'); ?></h2>
+				<div>
+					<h2><?php echo esc_html__('Draft Calendar', 'draft-league-hub'); ?></h2>
+					<p><?php echo esc_html__('Upcoming dates, deadlines, and league admin bits.', 'draft-league-hub'); ?></p>
+				</div>
+				<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d date', '%d dates', $query->post_count, 'draft-league-hub'), $query->post_count)); ?></span>
 			</div>
 
-			<?php if ($require_login && !is_user_logged_in()) : ?>
-				<div class="dlh-empty"><?php echo esc_html__('Log in to create an availability poll.', 'draft-league-hub'); ?></div>
-			<?php else : ?>
-				<form class="dlh-form dlh-form--compact" method="post" action="">
-					<h3><?php echo esc_html__('Create Availability Poll', 'draft-league-hub'); ?></h3>
-					<input type="hidden" name="dlh_action" value="create_poll">
-					<?php wp_nonce_field('dlh_create_poll', 'dlh_nonce'); ?>
-					<div class="dlh-fieldset">
-						<label for="poll_title"><?php echo esc_html__('Title', 'draft-league-hub'); ?></label>
-						<input id="poll_title" name="poll_title" type="text" required placeholder="<?php echo esc_attr__('Draft night, trade deadline call, end of season drinks...', 'draft-league-hub'); ?>">
-					</div>
-					<div class="dlh-fieldset">
-						<label for="poll_options"><?php echo esc_html__('Date/time options', 'draft-league-hub'); ?></label>
-						<textarea id="poll_options" name="poll_options" rows="4" required placeholder="<?php echo esc_attr__("Fri 9 Aug, 7:30pm\nSat 10 Aug, 2:00pm\nSun 11 Aug, 8:00pm", 'draft-league-hub'); ?>"></textarea>
-					</div>
-					<div class="dlh-fieldset">
-						<label for="poll_description"><?php echo esc_html__('Notes', 'draft-league-hub'); ?></label>
-						<textarea id="poll_description" name="poll_description" rows="2"></textarea>
-					</div>
-					<button class="dlh-button" type="submit"><?php echo esc_html__('Create poll', 'draft-league-hub'); ?></button>
-				</form>
-			<?php endif; ?>
-
-			<div class="dlh-stack">
+			<div class="dlh-calendar-list">
 				<?php if ($query->have_posts()) : ?>
 					<?php while ($query->have_posts()) : ?>
 						<?php $query->the_post(); ?>
-						<?php echo $this->render_poll(get_the_ID()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo $this->render_calendar_event(get_the_ID()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<?php endwhile; ?>
 					<?php wp_reset_postdata(); ?>
 				<?php else : ?>
-					<div class="dlh-empty"><?php echo esc_html__('No availability polls yet.', 'draft-league-hub'); ?></div>
+					<div class="dlh-empty"><?php echo esc_html__('No upcoming draft dates yet. Add one under Draft Dates in the dashboard.', 'draft-league-hub'); ?></div>
 				<?php endif; ?>
 			</div>
 		</div>

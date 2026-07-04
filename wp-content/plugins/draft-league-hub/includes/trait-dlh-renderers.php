@@ -184,6 +184,48 @@ trait DLH_Renderers {
 	}
 
 
+	private function render_calendar_event($post_id) {
+		$event_date = get_post_meta($post_id, 'dlh_event_date', true);
+		$event_time = get_post_meta($post_id, 'dlh_event_time', true);
+		$event_location = get_post_meta($post_id, 'dlh_event_location', true);
+		$event_label = get_post_meta($post_id, 'dlh_event_label', true);
+		$timezone = wp_timezone();
+		$date = DateTime::createFromFormat('Y-m-d', $event_date, $timezone);
+		$day = $date ? $date->format('d') : '--';
+		$month = $date ? $date->format('M') : __('TBC', 'draft-league-hub');
+		$weekday = $date ? wp_date('l', $date->getTimestamp()) : __('Date TBC', 'draft-league-hub');
+		$full_date = $date ? wp_date(get_option('date_format'), $date->getTimestamp()) : __('Date TBC', 'draft-league-hub');
+		$time_label = $event_time ? mysql2date(get_option('time_format'), $event_date . ' ' . $event_time . ':00') : __('All day', 'draft-league-hub');
+		$notes = get_post_field('post_content', $post_id);
+
+		ob_start();
+		echo '<article class="dlh-card dlh-calendar-event">';
+		echo '<div class="dlh-calendar-event__date" aria-hidden="true">';
+		echo '<span>' . esc_html($month) . '</span>';
+		echo '<strong>' . esc_html($day) . '</strong>';
+		echo '</div>';
+		echo '<div class="dlh-calendar-event__body">';
+		if ($event_label) {
+			echo '<p class="dlh-kicker">' . esc_html($event_label) . '</p>';
+		}
+		echo '<h3>' . esc_html(get_the_title($post_id)) . '</h3>';
+		echo '<div class="dlh-calendar-event__meta">';
+		echo '<span>' . esc_html($weekday . ', ' . $full_date) . '</span>';
+		echo '<span>' . esc_html($time_label) . '</span>';
+		if ($event_location) {
+			echo '<span>' . esc_html($event_location) . '</span>';
+		}
+		echo '</div>';
+		if ($notes) {
+			echo '<p>' . esc_html(wp_trim_words(wp_strip_all_tags($notes), 32)) . '</p>';
+		}
+		echo '</div>';
+		echo '</article>';
+
+		return ob_get_clean();
+	}
+
+
 	private function render_poll($post_id) {
 		$options = get_post_meta($post_id, 'dlh_options', true);
 		$options = is_array($options) ? $options : array();

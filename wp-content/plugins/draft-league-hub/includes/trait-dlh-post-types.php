@@ -95,6 +95,23 @@ trait DLH_Post_Types {
 		);
 
 		register_post_type(
+			'dlh_calendar_event',
+			array(
+				'labels' => array(
+					'name' => __('Draft Dates', 'draft-league-hub'),
+					'singular_name' => __('Draft Date', 'draft-league-hub'),
+					'add_new_item' => __('Add Draft Date', 'draft-league-hub'),
+					'edit_item' => __('Edit Draft Date', 'draft-league-hub'),
+				),
+				'public' => false,
+				'show_ui' => true,
+				'show_in_rest' => true,
+				'menu_icon' => 'dashicons-calendar-alt',
+				'supports' => array('title', 'editor', 'author'),
+			)
+		);
+
+		register_post_type(
 			'dlh_event_poll',
 			array(
 				'labels' => array(

@@ -44,6 +44,15 @@ trait DLH_Admin {
 			'normal',
 			'high'
 		);
+
+		add_meta_box(
+			'dlh_calendar_event_details',
+			__('Draft Date Details', 'draft-league-hub'),
+			array($this, 'render_calendar_event_meta_box'),
+			'dlh_calendar_event',
+			'normal',
+			'high'
+		);
 	}
 
 
@@ -147,7 +156,7 @@ trait DLH_Admin {
 				<li><code>[dlh_monthly_votes]</code> <?php echo esc_html__('Auto-generated monthly ballot', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_sidebets]</code> <?php echo esc_html__('Sidebet board and submission form', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_hall_of_fame]</code> <?php echo esc_html__('Funny pictures, videos, and receipts', 'draft-league-hub'); ?></li>
-				<li><code>[dlh_calendar]</code> <?php echo esc_html__('Availability poll board', 'draft-league-hub'); ?></li>
+				<li><code>[dlh_calendar]</code> <?php echo esc_html__('Upcoming draft dates', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_stats]</code> <?php echo esc_html__('Cached FPL Draft league standings widget', 'draft-league-hub'); ?></li>
 			</ul>
 		</div>
@@ -249,6 +258,23 @@ trait DLH_Admin {
 	}
 
 
+	public function render_calendar_event_meta_box($post) {
+		wp_nonce_field('dlh_save_calendar_event_meta', 'dlh_calendar_event_nonce');
+
+		$event_date = get_post_meta($post->ID, 'dlh_event_date', true);
+		$event_time = get_post_meta($post->ID, 'dlh_event_time', true);
+		$event_location = get_post_meta($post->ID, 'dlh_event_location', true);
+		$event_label = get_post_meta($post->ID, 'dlh_event_label', true);
+
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr><th scope="row"><label for="dlh_event_date">' . esc_html__('Date', 'draft-league-hub') . '</label></th><td><input type="date" id="dlh_event_date" name="dlh_event_date" value="' . esc_attr($event_date) . '" required></td></tr>';
+		echo '<tr><th scope="row"><label for="dlh_event_time">' . esc_html__('Time', 'draft-league-hub') . '</label></th><td><input type="time" id="dlh_event_time" name="dlh_event_time" value="' . esc_attr($event_time) . '"><p class="description">' . esc_html__('Optional. Leave blank for all-day reminders or deadlines.', 'draft-league-hub') . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="dlh_event_location">' . esc_html__('Location', 'draft-league-hub') . '</label></th><td><input type="text" class="regular-text" id="dlh_event_location" name="dlh_event_location" value="' . esc_attr($event_location) . '" placeholder="' . esc_attr__('Discord, WhatsApp, Pub, Online...', 'draft-league-hub') . '"></td></tr>';
+		echo '<tr><th scope="row"><label for="dlh_event_label">' . esc_html__('Label', 'draft-league-hub') . '</label></th><td><input type="text" class="regular-text" id="dlh_event_label" name="dlh_event_label" value="' . esc_attr($event_label) . '" placeholder="' . esc_attr__('Draft night, deadline, reminder...', 'draft-league-hub') . '"></td></tr>';
+		echo '</table>';
+	}
+
+
 	public function save_manager_meta($post_id) {
 		if (!$this->can_save_post($post_id, 'dlh_manager_nonce', 'dlh_save_manager_meta')) {
 			return;
@@ -295,5 +321,27 @@ trait DLH_Admin {
 		update_post_meta($post_id, 'dlh_media_type', $media_type);
 		update_post_meta($post_id, 'dlh_media_attachment_id', absint($_POST['dlh_media_attachment_id'] ?? 0));
 		update_post_meta($post_id, 'dlh_media_url', esc_url_raw(wp_unslash($_POST['dlh_media_url'] ?? '')));
+	}
+
+
+	public function save_calendar_event_meta($post_id) {
+		if (!$this->can_save_post($post_id, 'dlh_calendar_event_nonce', 'dlh_save_calendar_event_meta')) {
+			return;
+		}
+
+		$event_date = sanitize_text_field(wp_unslash($_POST['dlh_event_date'] ?? ''));
+		if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $event_date)) {
+			$event_date = '';
+		}
+
+		$event_time = sanitize_text_field(wp_unslash($_POST['dlh_event_time'] ?? ''));
+		if ($event_time && !preg_match('/^\d{2}:\d{2}$/', $event_time)) {
+			$event_time = '';
+		}
+
+		update_post_meta($post_id, 'dlh_event_date', $event_date);
+		update_post_meta($post_id, 'dlh_event_time', $event_time);
+		update_post_meta($post_id, 'dlh_event_location', sanitize_text_field(wp_unslash($_POST['dlh_event_location'] ?? '')));
+		update_post_meta($post_id, 'dlh_event_label', sanitize_text_field(wp_unslash($_POST['dlh_event_label'] ?? '')));
 	}
 }
