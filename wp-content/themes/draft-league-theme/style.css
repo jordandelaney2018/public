@@ -175,6 +175,7 @@ a {
 .dl-site-nav a {
 	border: 1px solid rgba(243, 201, 77, 0);
 	border-radius: 999px;
+	box-sizing: border-box;
 	color: rgba(255, 255, 255, 0.78);
 	display: inline-flex;
 	font-size: 0.9rem;
@@ -248,9 +249,17 @@ a {
 		width: 100%;
 	}
 
+	.dl-site-nav li {
+		display: block;
+		width: 100%;
+	}
+
 	.dl-site-nav a {
+		display: flex;
 		justify-content: center;
 		min-height: 44px;
+		text-align: center;
+		width: 100%;
 	}
 
 	.dl-site-brand__logo {
