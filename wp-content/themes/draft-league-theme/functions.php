@@ -38,6 +38,21 @@ add_action(
 	}
 );
 
+add_filter(
+	'template_include',
+	function ($template) {
+		if (is_page() && !is_front_page()) {
+			$page_template = get_stylesheet_directory() . '/page.php';
+			if (file_exists($page_template)) {
+				return $page_template;
+			}
+		}
+
+		return $template;
+	},
+	20
+);
+
 function draft_league_theme_site_name() {
 	$name = get_bloginfo('name');
 	return $name ? $name : __('Draft League', 'draft-league-theme');
@@ -84,4 +99,19 @@ function draft_league_theme_nav_menu($location, $fallback_menu = '') {
 		echo '</li>';
 	}
 	echo '</ul>';
+}
+
+function draft_league_theme_page_has_hub_shortcode($post = null) {
+	$post = get_post($post);
+	if (!$post) {
+		return false;
+	}
+
+	foreach (array('dlh_home', 'dlh_news', 'dlh_monthly_votes', 'dlh_sidebets', 'dlh_hall_of_fame', 'dlh_calendar', 'dlh_stats') as $shortcode) {
+		if (has_shortcode($post->post_content, $shortcode)) {
+			return true;
+		}
+	}
+
+	return false;
 }

@@ -16,7 +16,7 @@ get_header();
 	<?php while (have_posts()) : ?>
 		<?php the_post(); ?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
-			<?php if (!is_front_page()) : ?>
+			<?php if (!is_front_page() && !draft_league_theme_page_has_hub_shortcode()) : ?>
 				<h1><?php the_title(); ?></h1>
 			<?php endif; ?>
 
