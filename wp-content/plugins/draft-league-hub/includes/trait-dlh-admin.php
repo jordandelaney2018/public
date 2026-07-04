@@ -211,8 +211,31 @@ trait DLH_Admin {
 		$media_type = get_post_meta($post->ID, 'dlh_media_type', true);
 		$media_type = in_array($media_type, array('image', 'video'), true) ? $media_type : 'image';
 		$media_url = get_post_meta($post->ID, 'dlh_media_url', true);
+		$attachment_id = absint(get_post_meta($post->ID, 'dlh_media_attachment_id', true));
+		$preview = '';
 
+		if ($attachment_id) {
+			if (wp_attachment_is_image($attachment_id)) {
+				$preview = wp_get_attachment_image($attachment_id, 'medium');
+			} elseif (0 === strpos((string) get_post_mime_type($attachment_id), 'video/')) {
+				$attachment_url = wp_get_attachment_url($attachment_id);
+				if ($attachment_url) {
+					$preview = '<video controls src="' . esc_url($attachment_url) . '"></video>';
+				}
+			}
+		}
+
+		echo '<div class="dlh-hof-media-box">';
 		echo '<table class="form-table" role="presentation">';
+		echo '<tr><th scope="row">' . esc_html__('Media Library item', 'draft-league-hub') . '</th><td>';
+		echo '<input type="hidden" id="dlh_media_attachment_id" name="dlh_media_attachment_id" value="' . esc_attr($attachment_id) . '">';
+		echo '<div class="dlh-hof-media-actions">';
+		echo '<button type="button" class="button dlh-hof-media-choose">' . esc_html__('Choose image or video', 'draft-league-hub') . '</button>';
+		echo '<button type="button" class="button dlh-hof-media-clear">' . esc_html__('Clear media', 'draft-league-hub') . '</button>';
+		echo '</div>';
+		echo '<div class="dlh-hof-media-preview">' . $preview . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<p class="description">' . esc_html__('Pick an uploaded image or video from the WordPress Media Library.', 'draft-league-hub') . '</p>';
+		echo '</td></tr>';
 		echo '<tr><th scope="row"><label for="dlh_media_type">' . esc_html__('Media type', 'draft-league-hub') . '</label></th><td><select id="dlh_media_type" name="dlh_media_type">';
 		foreach (array('image' => __('Image', 'draft-league-hub'), 'video' => __('Video', 'draft-league-hub')) as $key => $label) {
 			echo '<option value="' . esc_attr($key) . '" ' . selected($media_type, $key, false) . '>' . esc_html($label) . '</option>';
@@ -220,9 +243,10 @@ trait DLH_Admin {
 		echo '</select></td></tr>';
 		echo '<tr><th scope="row"><label for="dlh_media_url">' . esc_html__('Media URL', 'draft-league-hub') . '</label></th><td>';
 		echo '<input type="url" class="large-text" id="dlh_media_url" name="dlh_media_url" value="' . esc_attr($media_url) . '">';
-		echo '<p class="description">' . esc_html__('For images you can use the featured image instead. For videos, paste a YouTube, Vimeo, or direct video URL.', 'draft-league-hub') . '</p>';
+		echo '<p class="description">' . esc_html__('Optional fallback for YouTube, Vimeo, or direct image/video URLs.', 'draft-league-hub') . '</p>';
 		echo '</td></tr>';
 		echo '</table>';
+		echo '</div>';
 	}
 
 
@@ -270,6 +294,7 @@ trait DLH_Admin {
 		}
 
 		update_post_meta($post_id, 'dlh_media_type', $media_type);
+		update_post_meta($post_id, 'dlh_media_attachment_id', absint($_POST['dlh_media_attachment_id'] ?? 0));
 		update_post_meta($post_id, 'dlh_media_url', esc_url_raw(wp_unslash($_POST['dlh_media_url'] ?? '')));
 	}
 }

@@ -1,0 +1,21 @@
+.dlh-hof-media-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.dlh-hof-media-preview img,
+.dlh-hof-media-preview video {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	display: block;
+	height: auto;
+	max-width: 320px;
+	width: 100%;
+}
+
+.dlh-hof-media-preview p {
+	margin: 8px 0 0;
+}

@@ -144,11 +144,16 @@ trait DLH_Renderers {
 		$media_type = get_post_meta($post_id, 'dlh_media_type', true);
 		$media_type = in_array($media_type, array('image', 'video'), true) ? $media_type : 'image';
 		$media_url = get_post_meta($post_id, 'dlh_media_url', true);
+		$attachment_id = absint(get_post_meta($post_id, 'dlh_media_attachment_id', true));
 
 		ob_start();
 		echo '<article class="dlh-card dlh-hof-card">';
 		echo '<div class="dlh-hof-card__media">';
-		if ('video' === $media_type && $media_url) {
+		if ($attachment_id && wp_attachment_is_image($attachment_id)) {
+			echo wp_get_attachment_image($attachment_id, 'large', false, array('alt' => get_the_title($post_id))); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		} elseif ($attachment_id && 0 === strpos((string) get_post_mime_type($attachment_id), 'video/') && wp_get_attachment_url($attachment_id)) {
+			echo '<video controls src="' . esc_url(wp_get_attachment_url($attachment_id)) . '"></video>';
+		} elseif ('video' === $media_type && $media_url) {
 			$embed = wp_oembed_get($media_url);
 			if ($embed) {
 				echo $embed; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
