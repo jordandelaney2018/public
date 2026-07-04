@@ -303,7 +303,7 @@ trait DLH_Renderers {
 			return ob_get_clean();
 		}
 
-		echo $this->render_fpl_stat_cards($standings, $entry_map, $player_map, $transactions, $trades); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo $this->render_fpl_stat_cards($details, $standings, $entry_map, $player_map, $transactions, $trades); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		echo '<div class="dlh-table-wrap"><table class="dlh-table">';
 		echo '<thead><tr><th>' . esc_html__('Rank', 'draft-league-hub') . '</th><th>' . esc_html__('Team', 'draft-league-hub') . '</th><th>' . esc_html__('Manager', 'draft-league-hub') . '</th><th>' . esc_html__('GW', 'draft-league-hub') . '</th><th>' . esc_html__('Total', 'draft-league-hub') . '</th></tr></thead><tbody>';
@@ -337,7 +337,7 @@ trait DLH_Renderers {
 	}
 
 
-	private function render_fpl_stat_cards($standings, $entry_map, $player_map, $transactions_data, $trades_data) {
+	private function render_fpl_stat_cards($details, $standings, $entry_map, $player_map, $transactions_data, $trades_data) {
 		$transactions = $transactions_data['transactions'] ?? array();
 		$trades = $trades_data['trades'] ?? array();
 		$accepted_transactions = array_values(
@@ -351,14 +351,21 @@ trait DLH_Renderers {
 		$trade_rows = is_array($trades) ? $trades : array();
 		$cards = array();
 
-		$current_high = $this->standings_extreme($standings, $entry_map, 'event_total', 'high');
-		if ($current_high) {
-			$cards[] = array('label' => __('Current GW High', 'draft-league-hub'), 'value' => $current_high['value'], 'detail' => $current_high['name']);
+		$season_extremes = $this->season_gameweek_extremes($details, $entry_map);
+		if (!empty($season_extremes['high'])) {
+			$cards[] = array(
+				'label' => __('Season GW High', 'draft-league-hub'),
+				'value' => $season_extremes['high']['points'],
+				'detail' => sprintf('%s, GW%d', $season_extremes['high']['team'], $season_extremes['high']['event']),
+			);
 		}
 
-		$current_low = $this->standings_extreme($standings, $entry_map, 'event_total', 'low');
-		if ($current_low) {
-			$cards[] = array('label' => __('Current GW Low', 'draft-league-hub'), 'value' => $current_low['value'], 'detail' => $current_low['name']);
+		if (!empty($season_extremes['low'])) {
+			$cards[] = array(
+				'label' => __('Season GW Low', 'draft-league-hub'),
+				'value' => $season_extremes['low']['points'],
+				'detail' => sprintf('%s, GW%d', $season_extremes['low']['team'], $season_extremes['low']['event']),
+			);
 		}
 
 		$cards = array_merge(
@@ -472,6 +479,103 @@ trait DLH_Renderers {
 		}
 
 		return $cards;
+	}
+
+
+	private function season_gameweek_extremes($details, $entry_map) {
+		$league = $details['league'] ?? array();
+		$league_id = absint($league['id'] ?? 0);
+		$start_event = max(1, absint($league['start_event'] ?? 1));
+		$stop_event = max($start_event, absint($league['stop_event'] ?? 38));
+		$cache_key = 'dlh_season_gw_extremes_' . md5($league_id . ':' . $start_event . ':' . $stop_event . ':' . count($entry_map));
+		$cached = get_transient($cache_key);
+
+		if (is_array($cached)) {
+			return $cached;
+		}
+
+		$extremes = array(
+			'high' => null,
+			'low' => null,
+		);
+		$entries = array();
+
+		foreach ($entry_map as $entry) {
+			$entry_id = absint($entry['entry_id'] ?? ($entry['id'] ?? 0));
+			if ($entry_id) {
+				$entries[$entry_id] = $entry;
+			}
+		}
+
+		foreach (range($start_event, $stop_event) as $event) {
+			$live = $this->api_get('/api/event/' . rawurlencode($event) . '/live');
+			if (is_wp_error($live) || empty($live['elements']) || !is_array($live['elements'])) {
+				continue;
+			}
+
+			foreach ($entries as $entry_id => $entry) {
+				$entry_id = absint($entry['entry_id'] ?? ($entry['id'] ?? 0));
+				if (!$entry_id) {
+					continue;
+				}
+
+				$entry_event = $this->api_get('/api/entry/' . rawurlencode($entry_id) . '/event/' . rawurlencode($event));
+				if (is_wp_error($entry_event)) {
+					continue;
+				}
+
+				$points = $this->entry_event_starting_points($entry_event, $live['elements']);
+				if (null === $points) {
+					continue;
+				}
+
+				$record = array(
+					'points' => $points,
+					'event' => $event,
+					'team' => $this->entry_team_name($entry),
+				);
+
+				if (null === $extremes['high'] || $points > $extremes['high']['points']) {
+					$extremes['high'] = $record;
+				}
+
+				if (null === $extremes['low'] || $points < $extremes['low']['points']) {
+					$extremes['low'] = $record;
+				}
+			}
+		}
+
+		set_transient($cache_key, $extremes, 12 * HOUR_IN_SECONDS);
+		return $extremes;
+	}
+
+
+	private function entry_event_starting_points($entry_event, $live_elements) {
+		$picks = $entry_event['picks'] ?? array();
+		if (empty($picks) || !is_array($picks)) {
+			return null;
+		}
+
+		$total = 0;
+		$has_points = false;
+		foreach ($picks as $pick) {
+			$position = absint($pick['position'] ?? 0);
+			if (!$position || $position > 11) {
+				continue;
+			}
+
+			$element_id = absint($pick['element'] ?? 0);
+			if (!$element_id || !isset($live_elements[$element_id])) {
+				continue;
+			}
+
+			$multiplier = intval($pick['multiplier'] ?? 1);
+			$player_points = intval($live_elements[$element_id]['stats']['total_points'] ?? 0);
+			$total += $player_points * $multiplier;
+			$has_points = true;
+		}
+
+		return $has_points ? $total : null;
 	}
 
 
