@@ -26,7 +26,14 @@ if (!defined('ABSPATH')) {
 			<?php echo esc_html(draft_league_theme_site_name()); ?>
 		</a>
 
-		<nav class="dl-site-nav dl-site-nav--primary" aria-label="<?php echo esc_attr__('Primary menu', 'draft-league-theme'); ?>">
+		<button class="dl-menu-toggle" type="button" aria-controls="dl-primary-menu" aria-expanded="false">
+			<span class="dl-menu-toggle__bar"></span>
+			<span class="dl-menu-toggle__bar"></span>
+			<span class="dl-menu-toggle__bar"></span>
+			<span class="screen-reader-text"><?php echo esc_html__('Menu', 'draft-league-theme'); ?></span>
+		</button>
+
+		<nav id="dl-primary-menu" class="dl-site-nav dl-site-nav--primary" aria-label="<?php echo esc_attr__('Primary menu', 'draft-league-theme'); ?>">
 			<?php
 			draft_league_theme_nav_menu('primary', 'Main Menu');
 			?>

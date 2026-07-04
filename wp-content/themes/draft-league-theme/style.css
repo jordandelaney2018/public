@@ -38,6 +38,19 @@ a {
 	color: inherit;
 }
 
+.screen-reader-text {
+	border: 0;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	width: 1px;
+	word-wrap: normal;
+}
+
 .dl-site-header,
 .dl-site-footer {
 	border-color: var(--dl-theme-line);
@@ -93,6 +106,58 @@ a {
 	width: 1.35rem;
 }
 
+.dl-menu-toggle {
+	align-items: center;
+	appearance: none;
+	background: #fff;
+	border: 1px solid var(--dl-theme-line);
+	border-radius: 999px;
+	cursor: pointer;
+	display: none;
+	height: 44px;
+	justify-content: center;
+	margin-left: auto;
+	padding: 0;
+	width: 44px;
+}
+
+.dl-menu-toggle__bar {
+	background: var(--dl-theme-text);
+	border-radius: 999px;
+	display: block;
+	height: 2px;
+	position: absolute;
+	transition: opacity 160ms ease, transform 160ms ease;
+	width: 18px;
+}
+
+.dl-menu-toggle__bar:nth-child(1) {
+	transform: translateY(-6px);
+}
+
+.dl-menu-toggle__bar:nth-child(3) {
+	transform: translateY(6px);
+}
+
+.dl-menu-toggle[aria-expanded="true"] .dl-menu-toggle__bar:nth-child(1) {
+	transform: rotate(45deg);
+}
+
+.dl-menu-toggle[aria-expanded="true"] .dl-menu-toggle__bar:nth-child(2) {
+	opacity: 0;
+}
+
+.dl-menu-toggle[aria-expanded="true"] .dl-menu-toggle__bar:nth-child(3) {
+	transform: rotate(-45deg);
+}
+
+.dl-menu-toggle:hover,
+.dl-menu-toggle:focus-visible {
+	background: var(--dl-theme-accent-soft);
+	border-color: #b8dccf;
+	outline: 0;
+}
+
 .dl-site-nav ul {
 	display: flex;
 	flex-wrap: wrap;
@@ -145,14 +210,42 @@ a {
 }
 
 @media (max-width: 720px) {
-	.dl-site-header__inner,
+	.dl-site-header__inner {
+		align-items: center;
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 14px;
+	}
+
 	.dl-site-footer__inner {
 		align-items: flex-start;
 		flex-direction: column;
 		gap: 14px;
 	}
 
+	.dl-menu-toggle {
+		display: inline-flex;
+		position: relative;
+	}
+
+	.dl-site-nav--primary {
+		flex-basis: 100%;
+		width: 100%;
+	}
+
+	.dl-site-header.dl-nav-ready .dl-site-nav--primary:not(.is-open) {
+		display: none;
+	}
+
 	.dl-site-nav ul {
+		align-items: stretch;
+		display: grid;
 		gap: 8px;
+		width: 100%;
+	}
+
+	.dl-site-nav a {
+		justify-content: center;
+		min-height: 44px;
 	}
 }
