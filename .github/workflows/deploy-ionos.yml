@@ -47,11 +47,11 @@ jobs:
           set net:max-retries 2
           set net:timeout 20
 
-          mkdir -p "${REMOTE_ROOT}/wp-content/plugins/draft-league-hub"
-          mirror -R --delete --verbose "wp-content/plugins/draft-league-hub" "${REMOTE_ROOT}/wp-content/plugins/draft-league-hub"
+          mkdir -p "${REMOTE_ROOT}/plugins/draft-league-hub"
+          mirror -R --delete --verbose "wp-content/plugins/draft-league-hub" "${REMOTE_ROOT}/plugins/draft-league-hub"
 
-          mkdir -p "${REMOTE_ROOT}/wp-content/themes/draft-league-theme"
-          mirror -R --delete --verbose "wp-content/themes/draft-league-theme" "${REMOTE_ROOT}/wp-content/themes/draft-league-theme"
+          mkdir -p "${REMOTE_ROOT}/themes/draft-league-theme"
+          mirror -R --delete --verbose "wp-content/themes/draft-league-theme" "${REMOTE_ROOT}/themes/draft-league-theme"
 
           bye
           EOF
