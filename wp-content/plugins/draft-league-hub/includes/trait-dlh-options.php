@@ -10,9 +10,9 @@ trait DLH_Options {
 		return array(
 			'league_name' => 'Draft League HQ',
 			'season_label' => '2026/27',
-			'hero_kicker' => 'FPL Draft',
+			'hero_kicker' => 'Cheers Hew',
 			'hero_title' => 'Draft League HQ',
-			'hero_copy' => 'Questionable trades, monthly slander, and sidebets that definitely started as jokes.',
+			'hero_copy' => 'Questionable trades, Als gay, Receipts kept forever.',
 			'fpl_league_id' => '',
 			'cache_minutes' => 30,
 			'live_vote_results' => 1,

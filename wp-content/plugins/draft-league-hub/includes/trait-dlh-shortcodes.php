@@ -28,7 +28,6 @@ trait DLH_Shortcodes {
 				<div class="dlh-hero__panel">
 					<span><?php echo esc_html($options['season_label']); ?></span>
 					<strong><?php echo esc_html($options['league_name']); ?></strong>
-					<small><?php echo esc_html__('Questionable trades. Monthly slander. Receipts kept forever.', 'draft-league-hub'); ?></small>
 				</div>
 			</section>
 			<section class="dlh-section">
