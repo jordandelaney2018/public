@@ -365,37 +365,6 @@
 	text-align: center;
 }
 
-.dlh-receipts {
-	border-top: 1px solid var(--dlh-line);
-	margin-top: 0.85rem;
-	padding-top: 0.75rem;
-}
-
-.dlh-receipts summary {
-	color: var(--dlh-muted);
-	cursor: pointer;
-	font-size: 0.85rem;
-	font-weight: 800;
-}
-
-.dlh-receipts blockquote {
-	border-left: 3px solid var(--dlh-gold);
-	margin: 0.75rem 0 0;
-	padding-left: 0.75rem;
-}
-
-.dlh-receipts blockquote p {
-	color: var(--dlh-muted);
-	margin: 0.25rem 0;
-}
-
-.dlh-receipts cite {
-	color: var(--dlh-muted);
-	font-size: 0.8rem;
-	font-style: normal;
-	font-weight: 800;
-}
-
 .dlh-mini-list {
 	display: grid;
 	gap: 0.5rem;

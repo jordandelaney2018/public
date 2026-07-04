@@ -102,7 +102,6 @@ trait DLH_Shortcodes {
 						$key = sanitize_key($question['key'] ?? '');
 						$type = $this->normalize_question_type($question['type'] ?? 'text');
 						$current_answer = $user_vote['answers'][$key]['value'] ?? '';
-						$current_reason = $user_vote['answers'][$key]['reason'] ?? '';
 						?>
 						<div class="dlh-fieldset">
 							<label for="answer-<?php echo esc_attr($key); ?>"><?php echo esc_html($question['label']); ?></label>
@@ -111,7 +110,6 @@ trait DLH_Shortcodes {
 							<?php else : ?>
 								<input id="answer-<?php echo esc_attr($key); ?>" type="text" name="answer[<?php echo esc_attr($key); ?>]" value="<?php echo esc_attr($current_answer); ?>" placeholder="<?php echo esc_attr__('Nomination', 'draft-league-hub'); ?>">
 							<?php endif; ?>
-							<textarea name="reason[<?php echo esc_attr($key); ?>]" rows="2" placeholder="<?php echo esc_attr__('Optional reason / evidence', 'draft-league-hub'); ?>"><?php echo esc_textarea($current_reason); ?></textarea>
 						</div>
 					<?php endforeach; ?>
 					<button class="dlh-button" type="submit"><?php echo esc_html($user_vote ? __('Update vote', 'draft-league-hub') : __('Submit vote', 'draft-league-hub')); ?></button>
@@ -131,8 +129,6 @@ trait DLH_Shortcodes {
 
 
 	public function shortcode_sidebets() {
-		$options = $this->get_options();
-		$require_login = !empty($options['sidebets_require_login']);
 		$query = new WP_Query(
 			array(
 				'post_type' => 'dlh_sidebet',
@@ -152,40 +148,34 @@ trait DLH_Shortcodes {
 				<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d bet', '%d bets', $query->found_posts, 'draft-league-hub'), $query->found_posts)); ?></span>
 			</div>
 
-			<?php if ($require_login && !is_user_logged_in()) : ?>
-				<div class="dlh-empty"><?php echo esc_html__('Log in to add a sidebet.', 'draft-league-hub'); ?></div>
-			<?php else : ?>
-				<form class="dlh-form dlh-form--compact" method="post" action="">
-					<h3><?php echo esc_html__('Add Sidebet', 'draft-league-hub'); ?></h3>
-					<input type="hidden" name="dlh_action" value="add_sidebet">
-					<?php wp_nonce_field('dlh_add_sidebet', 'dlh_nonce'); ?>
-					<div class="dlh-grid dlh-grid--two">
-						<div class="dlh-fieldset">
-							<label><?php echo esc_html__('Manager A', 'draft-league-hub'); ?></label>
-							<?php echo $this->manager_select('manager_a'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-						</div>
-						<div class="dlh-fieldset">
-							<label><?php echo esc_html__('Manager B', 'draft-league-hub'); ?></label>
-							<?php echo $this->manager_select('manager_b'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-						</div>
+			<form class="dlh-form dlh-form--compact" method="post" action="">
+				<h3><?php echo esc_html__('Add Sidebet', 'draft-league-hub'); ?></h3>
+				<input type="hidden" name="dlh_action" value="add_sidebet">
+				<?php wp_nonce_field('dlh_add_sidebet', 'dlh_nonce'); ?>
+				<div class="dlh-grid dlh-grid--two">
+					<div class="dlh-fieldset">
+						<label><?php echo esc_html__('Manager A', 'draft-league-hub'); ?></label>
+						<?php echo $this->manager_select('manager_a'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</div>
 					<div class="dlh-fieldset">
-						<label for="stipulation"><?php echo esc_html__('Stipulation', 'draft-league-hub'); ?></label>
-						<textarea id="stipulation" name="stipulation" rows="3" required placeholder="<?php echo esc_attr__('Example: Sam to finish above Liam, loser buys first round on draft night.', 'draft-league-hub'); ?>"></textarea>
+						<label><?php echo esc_html__('Manager B', 'draft-league-hub'); ?></label>
+						<?php echo $this->manager_select('manager_b'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</div>
-					<div class="dlh-grid dlh-grid--two">
-						<div class="dlh-fieldset">
-							<label for="stake"><?php echo esc_html__('Stake', 'draft-league-hub'); ?></label>
-							<input id="stake" name="stake" type="text" required placeholder="<?php echo esc_attr__('Pint, tenner, profile picture, etc.', 'draft-league-hub'); ?>">
-						</div>
-						<div class="dlh-fieldset">
-							<label for="due_date"><?php echo esc_html__('Due date', 'draft-league-hub'); ?></label>
-							<input id="due_date" name="due_date" type="date">
-						</div>
-					</div>
+				</div>
+				<div class="dlh-fieldset">
+					<label for="stipulation"><?php echo esc_html__('Stipulation', 'draft-league-hub'); ?></label>
+					<textarea id="stipulation" name="stipulation" rows="3" required placeholder="<?php echo esc_attr__('Example: Sam to finish above Liam, loser buys first round on draft night.', 'draft-league-hub'); ?>"></textarea>
+				</div>
+				<div class="dlh-fieldset">
+					<label for="stake"><?php echo esc_html__('Stake', 'draft-league-hub'); ?></label>
+					<input id="stake" name="stake" type="text" required placeholder="<?php echo esc_attr__('Pint, tenner, profile picture, etc.', 'draft-league-hub'); ?>">
+				</div>
+				<?php if (current_user_can('edit_posts')) : ?>
 					<button class="dlh-button" type="submit"><?php echo esc_html__('Add sidebet', 'draft-league-hub'); ?></button>
-				</form>
-			<?php endif; ?>
+				<?php else : ?>
+					<button class="dlh-button" type="submit"><?php echo esc_html__('Submit sidebet for approval', 'draft-league-hub'); ?></button>
+				<?php endif; ?>
+			</form>
 
 			<div class="dlh-card-grid">
 				<?php if ($query->have_posts()) : ?>

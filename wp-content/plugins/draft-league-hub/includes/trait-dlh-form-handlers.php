@@ -63,8 +63,6 @@ trait DLH_Form_Handlers {
 			}
 
 			$value = $_POST['answer'][$key] ?? '';
-			$reason = $_POST['reason'][$key] ?? '';
-
 			if ('manager' === $type) {
 				$value = absint($value);
 			} else {
@@ -75,7 +73,7 @@ trait DLH_Form_Handlers {
 				'label' => sanitize_text_field($question['label'] ?? ''),
 				'type' => $type,
 				'value' => $value,
-				'reason' => sanitize_textarea_field(wp_unslash($reason)),
+				'reason' => '',
 			);
 		}
 
@@ -97,11 +95,6 @@ trait DLH_Form_Handlers {
 	public function handle_sidebet_submission() {
 		$this->verify_nonce_or_die('dlh_add_sidebet');
 
-		$options = $this->get_options();
-		if (!empty($options['sidebets_require_login']) && !is_user_logged_in()) {
-			$this->redirect_with_notice('login_required');
-		}
-
 		$manager_a = absint($_POST['manager_a'] ?? 0);
 		$manager_b = absint($_POST['manager_b'] ?? 0);
 		$stipulation = sanitize_textarea_field(wp_unslash($_POST['stipulation'] ?? ''));
@@ -119,10 +112,11 @@ trait DLH_Form_Handlers {
 			wp_trim_words($stipulation, 8, '')
 		);
 
+		$publish_now = current_user_can('edit_posts');
 		$post_id = wp_insert_post(
 			array(
 				'post_type' => 'dlh_sidebet',
-				'post_status' => 'publish',
+				'post_status' => $publish_now ? 'publish' : 'pending',
 				'post_title' => $title,
 				'post_content' => $stipulation,
 				'post_author' => get_current_user_id(),
@@ -141,7 +135,7 @@ trait DLH_Form_Handlers {
 		update_post_meta($post_id, 'dlh_status', 'active');
 		update_post_meta($post_id, 'dlh_submitted_by', get_current_user_id());
 
-		$this->redirect_with_notice('sidebet_saved');
+		$this->redirect_with_notice($publish_now ? 'sidebet_saved' : 'sidebet_pending');
 	}
 
 

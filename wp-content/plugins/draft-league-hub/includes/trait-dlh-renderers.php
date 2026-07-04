@@ -80,47 +80,10 @@ trait DLH_Renderers {
 					echo '<li><span>' . esc_html($label) . '</span><strong>' . esc_html($count) . '</strong></li>';
 				}
 				echo '</ol>';
-				echo $this->render_vote_receipts($key, $type, $votes); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
 			echo '</div>';
 		}
 		echo '</div>';
-
-		return ob_get_clean();
-	}
-
-
-	private function render_vote_receipts($key, $type, $votes) {
-		$receipts = array();
-
-		foreach ($votes as $vote) {
-			$answer = $vote['answers'][$key] ?? array();
-			$reason = trim($answer['reason'] ?? '');
-			$value = $answer['value'] ?? '';
-
-			if ('' === $reason || '' === $value || 0 === $value) {
-				continue;
-			}
-
-			$receipts[] = array(
-				'name' => sanitize_text_field($vote['user_name'] ?? __('Someone', 'draft-league-hub')),
-				'value' => 'manager' === $type ? $this->manager_name(absint($value)) : sanitize_text_field($value),
-				'reason' => sanitize_textarea_field($reason),
-			);
-		}
-
-		if (empty($receipts)) {
-			return '';
-		}
-
-		ob_start();
-		echo '<details class="dlh-receipts"><summary>' . esc_html__('Reasons', 'draft-league-hub') . '</summary>';
-		foreach ($receipts as $receipt) {
-			echo '<blockquote><strong>' . esc_html($receipt['value']) . '</strong>';
-			echo '<p>' . esc_html($receipt['reason']) . '</p>';
-			echo '<cite>' . esc_html($receipt['name']) . '</cite></blockquote>';
-		}
-		echo '</details>';
 
 		return ob_get_clean();
 	}
@@ -132,7 +95,6 @@ trait DLH_Renderers {
 		$winner = absint(get_post_meta($post_id, 'dlh_winner', true));
 		$status = get_post_meta($post_id, 'dlh_status', true);
 		$stake = get_post_meta($post_id, 'dlh_stake', true);
-		$due_date = get_post_meta($post_id, 'dlh_due_date', true);
 		$stipulation = get_post_meta($post_id, 'dlh_stipulation', true);
 		$statuses = $this->sidebet_statuses();
 
@@ -140,9 +102,6 @@ trait DLH_Renderers {
 		echo '<article class="dlh-card dlh-sidebet">';
 		echo '<div class="dlh-card__body">';
 		echo '<div class="dlh-card__meta"><span class="dlh-pill">' . esc_html($statuses[$status] ?? __('Active', 'draft-league-hub')) . '</span>';
-		if ($due_date) {
-			echo '<span>' . esc_html(mysql2date(get_option('date_format'), $due_date)) . '</span>';
-		}
 		echo '</div>';
 		echo '<h3>' . esc_html(get_the_title($post_id)) . '</h3>';
 		echo '<p>' . esc_html($stipulation) . '</p>';
@@ -353,6 +312,7 @@ trait DLH_Renderers {
 			'vote_saved' => __('Vote saved. Democracy survives another month.', 'draft-league-hub'),
 			'vote_closed' => __('That monthly vote is closed.', 'draft-league-hub'),
 			'sidebet_saved' => __('Sidebet added. Receipts have been filed.', 'draft-league-hub'),
+			'sidebet_pending' => __('Sidebet submitted for approval.', 'draft-league-hub'),
 			'sidebet_updated' => __('Sidebet updated. The record has been amended.', 'draft-league-hub'),
 			'sidebet_update_denied' => __('You cannot update that sidebet.', 'draft-league-hub'),
 			'poll_saved' => __('Availability poll created.', 'draft-league-hub'),
