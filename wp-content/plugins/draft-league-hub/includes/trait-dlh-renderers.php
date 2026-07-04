@@ -282,16 +282,11 @@ trait DLH_Renderers {
 	}
 
 
-	private function render_standings($details) {
+	private function render_standings($details, $transactions = array(), $trades = array(), $bootstrap = array()) {
 		$league = $details['league']['name'] ?? '';
 		$entries = $details['league_entries'] ?? array();
-		$entry_map = array();
-		foreach ($entries as $entry) {
-			$id = $entry['id'] ?? ($entry['entry_id'] ?? 0);
-			if ($id) {
-				$entry_map[$id] = $entry;
-			}
-		}
+		$entry_map = $this->build_entry_map($entries);
+		$player_map = $this->build_player_map($bootstrap['elements'] ?? array());
 
 		$standings = $details['standings']['results'] ?? ($details['standings'] ?? array());
 		if (!is_array($standings)) {
@@ -308,35 +303,30 @@ trait DLH_Renderers {
 			return ob_get_clean();
 		}
 
+		echo $this->render_fpl_stat_cards($standings, $entry_map, $player_map, $transactions, $trades); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
 		echo '<div class="dlh-table-wrap"><table class="dlh-table">';
-		echo '<thead><tr><th>' . esc_html__('Rank', 'draft-league-hub') . '</th><th>' . esc_html__('Team', 'draft-league-hub') . '</th><th>' . esc_html__('Manager', 'draft-league-hub') . '</th><th>' . esc_html__('Points', 'draft-league-hub') . '</th><th>' . esc_html__('Played', 'draft-league-hub') . '</th><th>' . esc_html__('Record', 'draft-league-hub') . '</th></tr></thead><tbody>';
+		echo '<thead><tr><th>' . esc_html__('Rank', 'draft-league-hub') . '</th><th>' . esc_html__('Team', 'draft-league-hub') . '</th><th>' . esc_html__('Manager', 'draft-league-hub') . '</th><th>' . esc_html__('GW', 'draft-league-hub') . '</th><th>' . esc_html__('Total', 'draft-league-hub') . '</th></tr></thead><tbody>';
 
 		foreach ($standings as $index => $row) {
 			if (!is_array($row)) {
 				continue;
 			}
 
-			$entry_id = $row['entry'] ?? ($row['entry_id'] ?? ($row['id'] ?? 0));
-			$entry = $entry_id && isset($entry_map[$entry_id]) ? $entry_map[$entry_id] : array();
+			$entry_id = $row['league_entry'] ?? ($row['entry'] ?? ($row['entry_id'] ?? ($row['id'] ?? 0)));
+			$entry = $this->entry_from_map($entry_map, $entry_id);
 			$rank = $row['rank'] ?? ($row['position'] ?? ($index + 1));
-			$team = $row['entry_name'] ?? ($entry['entry_name'] ?? ($entry['name'] ?? __('Unknown team', 'draft-league-hub')));
-			$manager = $row['player_name'] ?? trim(($entry['player_first_name'] ?? '') . ' ' . ($entry['player_last_name'] ?? ''));
-			$points = $row['total'] ?? ($row['points'] ?? ($row['matches_won'] ?? ''));
-			$played = $row['matches_played'] ?? ($row['played'] ?? '');
-			$record_parts = array();
-			foreach (array('matches_won' => 'W', 'matches_drawn' => 'D', 'matches_lost' => 'L') as $key => $label) {
-				if (isset($row[$key])) {
-					$record_parts[] = $label . ':' . $row[$key];
-				}
-			}
+			$team = $row['entry_name'] ?? $this->entry_team_name($entry);
+			$manager = $row['player_name'] ?? $this->entry_manager_name($entry);
+			$event_points = $row['event_total'] ?? '';
+			$total_points = $row['total'] ?? ($row['points'] ?? '');
 
 			echo '<tr>';
 			echo '<td>' . esc_html($rank) . '</td>';
 			echo '<td>' . esc_html($team) . '</td>';
 			echo '<td>' . esc_html($manager ? $manager : '-') . '</td>';
-			echo '<td>' . esc_html($points) . '</td>';
-			echo '<td>' . esc_html($played) . '</td>';
-			echo '<td>' . esc_html(implode(' ', $record_parts)) . '</td>';
+			echo '<td>' . esc_html($event_points) . '</td>';
+			echo '<td>' . esc_html($total_points) . '</td>';
 			echo '</tr>';
 		}
 
@@ -344,6 +334,239 @@ trait DLH_Renderers {
 		echo '<p class="dlh-footnote">' . esc_html__('Data is cached to keep the FPL Draft API happy.', 'draft-league-hub') . '</p>';
 
 		return ob_get_clean();
+	}
+
+
+	private function render_fpl_stat_cards($standings, $entry_map, $player_map, $transactions_data, $trades_data) {
+		$transactions = $transactions_data['transactions'] ?? array();
+		$trades = $trades_data['trades'] ?? array();
+		$accepted_transactions = array_values(
+			array_filter(
+				is_array($transactions) ? $transactions : array(),
+				function($transaction) {
+					return is_array($transaction) && 'a' === ($transaction['result'] ?? '');
+				}
+			)
+		);
+		$trade_rows = is_array($trades) ? $trades : array();
+		$cards = array();
+
+		$current_high = $this->standings_extreme($standings, $entry_map, 'event_total', 'high');
+		if ($current_high) {
+			$cards[] = array('label' => __('Current GW High', 'draft-league-hub'), 'value' => $current_high['value'], 'detail' => $current_high['name']);
+		}
+
+		$current_low = $this->standings_extreme($standings, $entry_map, 'event_total', 'low');
+		if ($current_low) {
+			$cards[] = array('label' => __('Current GW Low', 'draft-league-hub'), 'value' => $current_low['value'], 'detail' => $current_low['name']);
+		}
+
+		$cards = array_merge(
+			$cards,
+			$this->transaction_stat_cards($accepted_transactions, $entry_map, $player_map),
+			$this->trade_stat_cards($trade_rows, $entry_map, $player_map)
+		);
+
+		if (empty($cards)) {
+			return '';
+		}
+
+		ob_start();
+		echo '<div class="dlh-stats-grid">';
+		foreach ($cards as $card) {
+			echo '<article class="dlh-stat-card">';
+			echo '<p class="dlh-kicker">' . esc_html($card['label']) . '</p>';
+			echo '<strong>' . esc_html($card['value']) . '</strong>';
+			if (!empty($card['detail'])) {
+				echo '<span>' . esc_html($card['detail']) . '</span>';
+			}
+			echo '</article>';
+		}
+		echo '</div>';
+
+		return ob_get_clean();
+	}
+
+
+	private function transaction_stat_cards($transactions, $entry_map, $player_map) {
+		$by_entry = array();
+		$adds = array();
+		$drops = array();
+		$by_event = array();
+
+		foreach ($transactions as $transaction) {
+			$entry_id = absint($transaction['entry'] ?? 0);
+			$event = absint($transaction['event'] ?? 0);
+			$element_in = absint($transaction['element_in'] ?? 0);
+			$element_out = absint($transaction['element_out'] ?? 0);
+			$this->increment_count($by_entry, (string) $entry_id);
+			$this->increment_count($by_event, (string) $event);
+			$this->increment_count($adds, (string) $element_in);
+			$this->increment_count($drops, (string) $element_out);
+		}
+
+		$cards = array();
+		$top_entry = $this->top_count($by_entry);
+		if ($top_entry) {
+			$cards[] = array('label' => __('Most Moves', 'draft-league-hub'), 'value' => $top_entry['count'], 'detail' => $this->entry_team_name($this->entry_from_map($entry_map, $top_entry['key'])));
+		}
+
+		$top_add = $this->top_count($adds);
+		if ($top_add) {
+			$cards[] = array('label' => __('Most Added Player', 'draft-league-hub'), 'value' => $top_add['count'], 'detail' => $this->player_name($player_map, $top_add['key']));
+		}
+
+		$top_drop = $this->top_count($drops);
+		if ($top_drop) {
+			$cards[] = array('label' => __('Most Dropped Player', 'draft-league-hub'), 'value' => $top_drop['count'], 'detail' => $this->player_name($player_map, $top_drop['key']));
+		}
+
+		$top_event = $this->top_count($by_event);
+		if ($top_event) {
+			$cards[] = array('label' => __('Busiest Gameweek', 'draft-league-hub'), 'value' => 'GW' . $top_event['key'], 'detail' => sprintf(_n('%d move', '%d moves', $top_event['count'], 'draft-league-hub'), $top_event['count']));
+		}
+
+		return $cards;
+	}
+
+
+	private function trade_stat_cards($trades, $entry_map, $player_map) {
+		$offers = array();
+		$involved = array();
+		$players = array();
+
+		foreach ($trades as $trade) {
+			if (!is_array($trade)) {
+				continue;
+			}
+
+			$offered = absint($trade['offered_entry'] ?? 0);
+			$received = absint($trade['received_entry'] ?? 0);
+			$this->increment_count($offers, (string) $offered);
+			$this->increment_count($involved, (string) $offered);
+			$this->increment_count($involved, (string) $received);
+
+			foreach (($trade['tradeitem_set'] ?? array()) as $item) {
+				if (!is_array($item)) {
+					continue;
+				}
+				$this->increment_count($players, (string) absint($item['element_in'] ?? 0));
+				$this->increment_count($players, (string) absint($item['element_out'] ?? 0));
+			}
+		}
+
+		$cards = array();
+		$top_offer = $this->top_count($offers);
+		if ($top_offer) {
+			$cards[] = array('label' => __('Most Trade Offers', 'draft-league-hub'), 'value' => $top_offer['count'], 'detail' => $this->entry_team_name($this->entry_from_map($entry_map, $top_offer['key'])));
+		}
+
+		$top_involved = $this->top_count($involved);
+		if ($top_involved) {
+			$cards[] = array('label' => __('Most Trade Involvement', 'draft-league-hub'), 'value' => $top_involved['count'], 'detail' => $this->entry_team_name($this->entry_from_map($entry_map, $top_involved['key'])));
+		}
+
+		$top_player = $this->top_count($players);
+		if ($top_player) {
+			$cards[] = array('label' => __('Most Traded Player', 'draft-league-hub'), 'value' => $top_player['count'], 'detail' => $this->player_name($player_map, $top_player['key']));
+		}
+
+		return $cards;
+	}
+
+
+	private function standings_extreme($standings, $entry_map, $field, $direction) {
+		$winner = null;
+		foreach ($standings as $row) {
+			if (!is_array($row) || !isset($row[$field])) {
+				continue;
+			}
+
+			$value = intval($row[$field]);
+			if (null === $winner || ('high' === $direction ? $value > $winner['value'] : $value < $winner['value'])) {
+				$entry = $this->entry_from_map($entry_map, $row['league_entry'] ?? 0);
+				$winner = array(
+					'value' => $value,
+					'name' => $this->entry_team_name($entry),
+				);
+			}
+		}
+
+		return $winner;
+	}
+
+
+	private function build_entry_map($entries) {
+		$map = array();
+		foreach ($entries as $entry) {
+			foreach (array('id', 'entry_id') as $key) {
+				$id = absint($entry[$key] ?? 0);
+				if ($id) {
+					$map[$id] = $entry;
+				}
+			}
+		}
+
+		return $map;
+	}
+
+
+	private function build_player_map($players) {
+		$map = array();
+		foreach ($players as $player) {
+			$id = absint($player['id'] ?? 0);
+			if ($id) {
+				$map[$id] = $player;
+			}
+		}
+
+		return $map;
+	}
+
+
+	private function entry_from_map($entry_map, $entry_id) {
+		$entry_id = absint($entry_id);
+		return $entry_id && isset($entry_map[$entry_id]) ? $entry_map[$entry_id] : array();
+	}
+
+
+	private function entry_team_name($entry) {
+		return $entry['entry_name'] ?? ($entry['name'] ?? __('Unknown team', 'draft-league-hub'));
+	}
+
+
+	private function entry_manager_name($entry) {
+		return trim(($entry['player_first_name'] ?? '') . ' ' . ($entry['player_last_name'] ?? ''));
+	}
+
+
+	private function player_name($player_map, $player_id) {
+		$player_id = absint($player_id);
+		$player = $player_id && isset($player_map[$player_id]) ? $player_map[$player_id] : array();
+		return $player['web_name'] ?? trim(($player['first_name'] ?? '') . ' ' . ($player['second_name'] ?? '')) ?: __('Unknown player', 'draft-league-hub');
+	}
+
+
+	private function increment_count(&$counts, $key) {
+		if (!$key || '0' === $key) {
+			return;
+		}
+
+		if (!isset($counts[$key])) {
+			$counts[$key] = 0;
+		}
+		$counts[$key]++;
+	}
+
+
+	private function top_count($counts) {
+		if (empty($counts)) {
+			return null;
+		}
+
+		arsort($counts);
+		$key = array_key_first($counts);
+		return array('key' => $key, 'count' => $counts[$key]);
 	}
 
 

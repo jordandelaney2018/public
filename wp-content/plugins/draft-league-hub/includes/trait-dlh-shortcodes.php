@@ -294,7 +294,15 @@ trait DLH_Shortcodes {
 				if (is_wp_error($details)) {
 					echo '<div class="dlh-empty">' . esc_html($details->get_error_message()) . '</div>';
 				} else {
-					echo $this->render_standings($details); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					$transactions = $this->api_get('/api/draft/league/' . rawurlencode($league_id) . '/transactions');
+					$trades = $this->api_get('/api/draft/league/' . rawurlencode($league_id) . '/trades');
+					$bootstrap = $this->api_get('/api/bootstrap-static');
+					echo $this->render_standings(
+						$details,
+						is_wp_error($transactions) ? array() : $transactions,
+						is_wp_error($trades) ? array() : $trades,
+						is_wp_error($bootstrap) ? array() : $bootstrap
+					); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				}
 				?>
 			<?php endif; ?>
