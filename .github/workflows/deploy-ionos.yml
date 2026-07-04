@@ -41,11 +41,17 @@ jobs:
           : "${IONOS_REMOTE_PATH:?Missing IONOS_REMOTE_PATH secret}"
 
           REMOTE_ROOT="${IONOS_REMOTE_PATH%/}"
+          if [ -z "${REMOTE_ROOT}" ] || [ "${REMOTE_ROOT}" = "/public/wp-content" ]; then
+            REMOTE_ROOT="/"
+          fi
 
           lftp -u "${IONOS_SFTP_USER}","${IONOS_SFTP_PASSWORD}" -p "${IONOS_SFTP_PORT}" "sftp://${IONOS_SFTP_HOST}" <<EOF
           set sftp:auto-confirm yes
           set net:max-retries 2
           set net:timeout 20
+
+          pwd
+          cls -la
 
           mkdir -p "${REMOTE_ROOT}/plugins/draft-league-hub"
           mirror -R --delete --verbose "wp-content/plugins/draft-league-hub" "${REMOTE_ROOT}/plugins/draft-league-hub"
