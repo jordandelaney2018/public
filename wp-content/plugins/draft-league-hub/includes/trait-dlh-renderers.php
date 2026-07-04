@@ -195,7 +195,6 @@ trait DLH_Renderers {
 		$month = $date ? $date->format('M') : __('TBC', 'draft-league-hub');
 		$weekday = $date ? wp_date('l', $date->getTimestamp()) : __('Date TBC', 'draft-league-hub');
 		$full_date = $date ? wp_date(get_option('date_format'), $date->getTimestamp()) : __('Date TBC', 'draft-league-hub');
-		$time_label = $event_time ? mysql2date(get_option('time_format'), $event_date . ' ' . $event_time . ':00') : __('All day', 'draft-league-hub');
 		$notes = get_post_field('post_content', $post_id);
 
 		ob_start();
@@ -211,7 +210,6 @@ trait DLH_Renderers {
 		echo '<h3>' . esc_html(get_the_title($post_id)) . '</h3>';
 		echo '<div class="dlh-calendar-event__meta">';
 		echo '<span>' . esc_html($weekday . ', ' . $full_date) . '</span>';
-		echo '<span>' . esc_html($time_label) . '</span>';
 		if ($event_location) {
 			echo '<span>' . esc_html($event_location) . '</span>';
 		}

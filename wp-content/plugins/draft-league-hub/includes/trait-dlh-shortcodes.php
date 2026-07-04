@@ -158,7 +158,7 @@ trait DLH_Shortcodes {
 				</div>
 				<div class="dlh-fieldset">
 					<label for="stipulation"><?php echo esc_html__('Stipulation', 'draft-league-hub'); ?></label>
-					<textarea id="stipulation" name="stipulation" rows="3" required placeholder="<?php echo esc_attr__('Example: Sam to finish above Liam, loser buys first round on draft night.', 'draft-league-hub'); ?>"></textarea>
+					<textarea id="stipulation" name="stipulation" rows="3" required placeholder="<?php echo esc_attr__('Example: Neil to bum Joe to death this weekend.', 'draft-league-hub'); ?>"></textarea>
 				</div>
 				<div class="dlh-fieldset">
 					<label for="stake"><?php echo esc_html__('Stake', 'draft-league-hub'); ?></label>
