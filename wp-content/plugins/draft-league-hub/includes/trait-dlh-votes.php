@@ -48,6 +48,9 @@ trait DLH_Votes {
 		$timezone = wp_timezone();
 		$now = new DateTime('now', $timezone);
 		$month_key = $now->format('Y-m');
+		$award_month = $this->vote_award_month_datetime($now);
+		$award_key = $award_month->format('Y-m');
+		$award_title = $award_month->format('F Y') . ' Awards';
 		$close = $this->vote_month_close_datetime($now);
 
 		$existing = get_posts(
@@ -67,6 +70,16 @@ trait DLH_Votes {
 			if ($current_close !== $close->format('Y-m-d H:i:s')) {
 				update_post_meta($post_id, 'dlh_open_until', $close->format('Y-m-d H:i:s'));
 			}
+			update_post_meta($post_id, 'dlh_award_month', $award_key);
+
+			if (get_the_title($post_id) !== $award_title) {
+				wp_update_post(
+					array(
+						'ID' => $post_id,
+						'post_title' => $award_title,
+					)
+				);
+			}
 
 			return $post_id;
 		}
@@ -75,19 +88,28 @@ trait DLH_Votes {
 			array(
 				'post_type' => 'dlh_vote_month',
 				'post_status' => 'publish',
-				'post_title' => $now->format('F Y') . ' Votes',
+				'post_title' => $award_title,
 			)
 		);
 
 		if (!is_wp_error($post_id) && $post_id) {
 			$options = $this->get_options();
 			update_post_meta($post_id, 'dlh_month', $month_key);
+			update_post_meta($post_id, 'dlh_award_month', $award_key);
 			update_post_meta($post_id, 'dlh_open_until', $close->format('Y-m-d H:i:s'));
 			update_post_meta($post_id, 'dlh_questions', $this->parse_default_questions($options['default_questions']));
 			update_post_meta($post_id, 'dlh_votes', array());
 		}
 
 		return absint($post_id);
+	}
+
+
+	private function vote_award_month_datetime(DateTime $date) {
+		$award_month = clone $date;
+		$award_month->modify('first day of previous month')->setTime(0, 0, 0);
+
+		return $award_month;
 	}
 
 

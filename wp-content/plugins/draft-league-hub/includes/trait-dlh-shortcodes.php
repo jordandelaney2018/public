@@ -85,7 +85,7 @@ trait DLH_Shortcodes {
 			<?php endif; ?>
 
 			<?php if ($this->is_vote_closed($vote_id)) : ?>
-				<div class="dlh-empty"><?php echo esc_html__('Voting is closed for this month.', 'draft-league-hub'); ?></div>
+				<div class="dlh-empty"><?php echo esc_html__('Voting is closed for these awards.', 'draft-league-hub'); ?></div>
 			<?php else : ?>
 				<form class="dlh-form" method="post" action="">
 					<input type="hidden" name="dlh_action" value="submit_vote">
