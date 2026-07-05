@@ -162,7 +162,7 @@ trait DLH_Shortcodes {
 				</div>
 				<div class="dlh-fieldset">
 					<label for="stake"><?php echo esc_html__('Stake', 'draft-league-hub'); ?></label>
-					<input id="stake" name="stake" type="text" required placeholder="<?php echo esc_attr__('Pint, tenner, profile picture, etc.', 'draft-league-hub'); ?>">
+					<input id="stake" name="stake" type="text" required placeholder="<?php echo esc_attr__('Pint, £10, death wing, etc.', 'draft-league-hub'); ?>">
 				</div>
 				<?php if (current_user_can('edit_posts')) : ?>
 					<button class="dlh-button" type="submit"><?php echo esc_html__('Add sidebet', 'draft-league-hub'); ?></button>
