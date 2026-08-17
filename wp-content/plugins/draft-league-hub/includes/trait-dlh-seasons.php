@@ -148,6 +148,31 @@ trait DLH_Seasons {
 	}
 
 
+	private function get_season_snapshot($season_id) {
+		global $wpdb;
+
+		$season_id = absint($season_id);
+		if (!$season_id || !$this->seasons_table_exists()) {
+			return array();
+		}
+
+		$table_name = $this->seasons_table_name();
+		$encoded = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT snapshot FROM {$table_name} WHERE id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$season_id
+			)
+		);
+
+		if (!$encoded) {
+			return array();
+		}
+
+		$snapshot = json_decode($encoded, true);
+		return is_array($snapshot) ? $snapshot : array();
+	}
+
+
 	private function insert_season($label, $league_id, $status = 'archived') {
 		global $wpdb;
 
@@ -323,28 +348,29 @@ trait DLH_Seasons {
 		}
 
 		$warnings = array();
+		$saved_snapshot = $this->get_season_snapshot($current['id']);
 		$transactions = $this->api_get('/api/draft/league/' . $league_id . '/transactions');
 		if (is_wp_error($transactions)) {
 			$warnings[] = $transactions->get_error_message();
-			$transactions = array();
+			$transactions = $saved_snapshot['transactions'] ?? array();
 		}
 
 		$trades = $this->api_get('/api/draft/league/' . $league_id . '/trades');
 		if (is_wp_error($trades)) {
 			$warnings[] = $trades->get_error_message();
-			$trades = array();
+			$trades = $saved_snapshot['trades'] ?? array();
 		}
 
 		$bootstrap = $this->api_get('/api/bootstrap-static');
 		if (is_wp_error($bootstrap)) {
 			$warnings[] = $bootstrap->get_error_message();
-			$bootstrap = array();
+			$bootstrap = $saved_snapshot['bootstrap'] ?? array();
 		}
 
 		$draft = $this->api_get('/api/draft/' . $league_id . '/choices');
 		if (is_wp_error($draft)) {
 			$warnings[] = $draft->get_error_message();
-			$draft = array();
+			$draft = $saved_snapshot['draft'] ?? array();
 		}
 
 		return $this->record_current_season_snapshot($details, $transactions, $trades, $bootstrap, $draft, $warnings);

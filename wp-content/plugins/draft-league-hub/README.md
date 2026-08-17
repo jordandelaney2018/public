@@ -11,6 +11,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - Calendar page for upcoming draft dates, deadlines, and league events.
 - Cached FPL Draft API standings widget.
 - Season records and locally stored FPL Draft snapshots for safe annual rollover.
+- Season tabs and a complete draft recap with the order, original squads, and full board.
 
 ## Install
 
@@ -41,7 +42,7 @@ season first and cancels the rollover if the standings cannot be saved.
 - `[dlh_monthly_votes]` - current monthly vote.
 - `[dlh_sidebets]` - sidebet board and submission form.
 - `[dlh_calendar]` - upcoming draft dates.
-- `[dlh_stats]` - FPL Draft league standings.
+- `[dlh_stats]` - seasonal Data Hub, FPL Draft standings, and saved draft recap.
 
 ## FPL Draft API
 

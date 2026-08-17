@@ -277,22 +277,31 @@ trait DLH_Shortcodes {
 
 
 	public function shortcode_stats() {
-		$options = $this->get_options();
-		$league_id = $options['fpl_league_id'];
-		ob_start();
-		?>
-		<div class="dlh-wrap dlh-section">
-			<div class="dlh-section__head">
-				<h2><?php echo esc_html__('League Stats', 'draft-league-hub'); ?></h2>
-				<span class="dlh-pill"><?php echo esc_html__('FPL Draft API', 'draft-league-hub'); ?></span>
-			</div>
-			<?php if (!$league_id) : ?>
-				<div class="dlh-empty"><?php echo esc_html__('Add your FPL Draft league ID in Settings > Draft League Hub to enable live standings.', 'draft-league-hub'); ?></div>
-			<?php else : ?>
-				<?php
+		$seasons = $this->get_seasons();
+		$selected_season = $this->selected_data_hub_season($seasons);
+		$payload = array();
+		$error_message = '';
+		$using_saved_copy = false;
+		$is_archived = $selected_season && 'archived' === $selected_season['status'];
+
+		if ($selected_season) {
+			if ($is_archived) {
+				$payload = $this->get_season_snapshot($selected_season['id']);
+				if (!$payload) {
+					$error_message = __('No saved data is available for this archived season yet.', 'draft-league-hub');
+				}
+			} elseif (empty($selected_season['league_id'])) {
+				$error_message = __('Add the current season FPL Draft league ID in Settings > Draft League Hub to enable live data.', 'draft-league-hub');
+			} else {
+				$league_id = $selected_season['league_id'];
 				$details = $this->api_get('/api/league/' . rawurlencode($league_id) . '/details');
 				if (is_wp_error($details)) {
-					echo '<div class="dlh-empty">' . esc_html($details->get_error_message()) . '</div>';
+					$payload = $this->get_season_snapshot($selected_season['id']);
+					if ($payload) {
+						$using_saved_copy = true;
+					} else {
+						$error_message = $details->get_error_message();
+					}
 				} else {
 					$transactions = $this->api_get('/api/draft/league/' . rawurlencode($league_id) . '/transactions');
 					$trades = $this->api_get('/api/draft/league/' . rawurlencode($league_id) . '/trades');
@@ -311,22 +320,119 @@ trait DLH_Shortcodes {
 					if (is_wp_error($draft)) {
 						$warnings[] = $draft->get_error_message();
 					}
+					$saved_payload = $warnings ? $this->get_season_snapshot($selected_season['id']) : array();
 
-					$transaction_data = is_wp_error($transactions) ? array() : $transactions;
-					$trade_data = is_wp_error($trades) ? array() : $trades;
-					$bootstrap_data = is_wp_error($bootstrap) ? array() : $bootstrap;
-					$draft_data = is_wp_error($draft) ? array() : $draft;
-					$this->record_current_season_snapshot($details, $transaction_data, $trade_data, $bootstrap_data, $draft_data, $warnings);
-					echo $this->render_standings(
-						$details,
-						$transaction_data,
-						$trade_data,
-						$bootstrap_data
-					); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					$payload = array(
+						'details' => $details,
+						'transactions' => is_wp_error($transactions) ? ($saved_payload['transactions'] ?? array()) : $transactions,
+						'trades' => is_wp_error($trades) ? ($saved_payload['trades'] ?? array()) : $trades,
+						'bootstrap' => is_wp_error($bootstrap) ? ($saved_payload['bootstrap'] ?? array()) : $bootstrap,
+						'draft' => is_wp_error($draft) ? ($saved_payload['draft'] ?? array()) : $draft,
+						'warnings' => $warnings,
+					);
+					$this->record_current_season_snapshot(
+						$payload['details'],
+						$payload['transactions'],
+						$payload['trades'],
+						$payload['bootstrap'],
+						$payload['draft'],
+						$payload['warnings']
+					);
 				}
-				?>
+			}
+		} else {
+			$error_message = __('No season has been configured yet.', 'draft-league-hub');
+		}
+
+		ob_start();
+		?>
+		<div class="dlh-wrap dlh-section">
+			<div class="dlh-section__head">
+				<div>
+					<h2><?php echo esc_html__('Data Hub', 'draft-league-hub'); ?></h2>
+					<p><?php echo esc_html__('Standings, season records, transfers, trades, and the original draft.', 'draft-league-hub'); ?></p>
+				</div>
+				<?php if ($selected_season) : ?>
+					<span class="dlh-pill"><?php echo esc_html($is_archived ? __('Season archive', 'draft-league-hub') : __('Current season', 'draft-league-hub')); ?></span>
+				<?php endif; ?>
+			</div>
+
+			<?php echo $this->render_data_hub_season_tabs($seasons, $selected_season); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+
+			<?php if ($using_saved_copy) : ?>
+				<div class="dlh-notice"><?php echo esc_html__('Live FPL Draft data is temporarily unavailable, so this is the latest saved copy.', 'draft-league-hub'); ?></div>
+			<?php elseif ($is_archived && !empty($selected_season['snapshot_captured_at'])) : ?>
+				<div class="dlh-notice"><?php echo esc_html(sprintf(__('Archived data captured on %s.', 'draft-league-hub'), get_date_from_gmt($selected_season['snapshot_captured_at'], get_option('date_format') . ' ' . get_option('time_format')))); ?></div>
+			<?php endif; ?>
+
+			<?php if ($error_message) : ?>
+				<div class="dlh-empty"><?php echo esc_html($error_message); ?></div>
+			<?php elseif ($payload) : ?>
+				<?php echo $this->render_draft_recap($payload['details'] ?? array(), $payload['draft'] ?? array(), $payload['bootstrap'] ?? array(), $selected_season); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+
+				<section class="dlh-data-block" aria-labelledby="dlh-season-stats-title">
+					<div class="dlh-section__head">
+						<div>
+							<p class="dlh-kicker"><?php echo esc_html($selected_season['label']); ?></p>
+							<h3 id="dlh-season-stats-title"><?php echo esc_html__('League standings & stats', 'draft-league-hub'); ?></h3>
+						</div>
+					</div>
+					<?php
+					echo $this->render_standings(
+						$payload['details'] ?? array(),
+						$payload['transactions'] ?? array(),
+						$payload['trades'] ?? array(),
+						$payload['bootstrap'] ?? array(),
+						!$is_archived && !$using_saved_copy,
+						$is_archived || $using_saved_copy
+					); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					?>
+				</section>
 			<?php endif; ?>
 		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+
+	private function selected_data_hub_season($seasons) {
+		$requested_slug = isset($_GET['season']) ? sanitize_title(wp_unslash($_GET['season'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ($requested_slug) {
+			foreach ($seasons as $season) {
+				if ($requested_slug === $season['slug']) {
+					return $season;
+				}
+			}
+		}
+
+		foreach ($seasons as $season) {
+			if ('current' === $season['status']) {
+				return $season;
+			}
+		}
+
+		return $seasons[0] ?? null;
+	}
+
+
+	private function render_data_hub_season_tabs($seasons, $selected_season) {
+		if (!$seasons || !$selected_season) {
+			return '';
+		}
+
+		$page_id = get_queried_object_id();
+		$base_url = $page_id ? get_permalink($page_id) : remove_query_arg('season');
+		ob_start();
+		?>
+		<nav class="dlh-season-tabs" aria-label="<?php echo esc_attr__('Data Hub seasons', 'draft-league-hub'); ?>">
+			<?php foreach ($seasons as $season) : ?>
+				<?php $is_selected = absint($season['id']) === absint($selected_season['id']); ?>
+				<a class="dlh-season-tab<?php echo $is_selected ? ' is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('season', $season['slug'], $base_url)); ?>"<?php echo $is_selected ? ' aria-current="page"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+					<span><?php echo esc_html($season['label']); ?></span>
+					<small><?php echo esc_html('current' === $season['status'] ? __('Current', 'draft-league-hub') : __('Archive', 'draft-league-hub')); ?></small>
+				</a>
+			<?php endforeach; ?>
+		</nav>
 		<?php
 		return ob_get_clean();
 	}

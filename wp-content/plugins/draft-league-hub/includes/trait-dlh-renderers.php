@@ -282,7 +282,238 @@ trait DLH_Renderers {
 	}
 
 
-	private function render_standings($details, $transactions = array(), $trades = array(), $bootstrap = array()) {
+	private function render_draft_recap($details, $draft, $bootstrap, $season = array()) {
+		$choices = $draft['choices'] ?? array();
+		if (!$choices || !is_array($choices)) {
+			return '<div class="dlh-empty">' . esc_html__('The completed draft choices are not available for this season yet.', 'draft-league-hub') . '</div>';
+		}
+
+		$choices = array_values(
+			array_filter(
+				$choices,
+				function($choice) {
+					return is_array($choice) && !empty($choice['entry']) && !empty($choice['element']);
+				}
+			)
+		);
+		usort(
+			$choices,
+			function($left, $right) {
+				return absint($left['index'] ?? 0) <=> absint($right['index'] ?? 0);
+			}
+		);
+
+		if (!$choices) {
+			return '<div class="dlh-empty">' . esc_html__('The completed draft choices are not available for this season yet.', 'draft-league-hub') . '</div>';
+		}
+
+		$player_map = $this->build_player_map($bootstrap['elements'] ?? array());
+		$manager_groups = array();
+		$rounds = array();
+		$auto_pick_count = 0;
+		$max_round = 0;
+		$max_pick = 0;
+		$enriched_choices = array();
+
+		foreach ($choices as $choice) {
+			$entry_id = absint($choice['entry'] ?? 0);
+			$round = max(1, absint($choice['round'] ?? 0));
+			$pick = max(1, absint($choice['pick'] ?? 0));
+			$choice['player_name'] = $this->draft_choice_player_name($choice, $player_map);
+			$choice['manager_name'] = $this->draft_choice_manager_name($choice);
+			$enriched_choices[] = $choice;
+			$rounds[$round][$pick] = $choice;
+			$max_round = max($max_round, $round);
+			$max_pick = max($max_pick, $pick);
+			if (!empty($choice['was_auto'])) {
+				$auto_pick_count++;
+			}
+
+			if (!isset($manager_groups[$entry_id])) {
+				$manager_groups[$entry_id] = array(
+					'entry_id' => $entry_id,
+					'team_name' => sanitize_text_field($choice['entry_name'] ?? ''),
+					'manager_name' => $choice['manager_name'],
+					'draft_slot' => 0,
+					'choices' => array(),
+				);
+			}
+
+			if (1 === $round) {
+				$manager_groups[$entry_id]['draft_slot'] = $pick;
+			}
+			$manager_groups[$entry_id]['choices'][] = $choice;
+		}
+		$choices = $enriched_choices;
+
+		$manager_groups = array_values($manager_groups);
+		usort(
+			$manager_groups,
+			function($left, $right) {
+				return absint($left['draft_slot']) <=> absint($right['draft_slot']);
+			}
+		);
+
+		$first_choice = $choices[0];
+		$last_choice = $choices[count($choices) - 1];
+		$first_time = strtotime($first_choice['choice_time'] ?? '');
+		$last_time = strtotime($last_choice['choice_time'] ?? '');
+		$duration_minutes = $first_time && $last_time ? max(1, (int) ceil(($last_time - $first_time) / MINUTE_IN_SECONDS)) : 0;
+		$draft_date = $first_time ? wp_date('j M Y', $first_time) : __('Draft night', 'draft-league-hub');
+		$draft_id = absint($first_choice['draft'] ?? 0);
+		$summary_cards = array(
+			array(
+				'label' => __('Draft night', 'draft-league-hub'),
+				'value' => $draft_date,
+				'detail' => $duration_minutes ? sprintf(_n('%d minute', '%d minutes', $duration_minutes, 'draft-league-hub'), $duration_minutes) : '',
+			),
+			array(
+				'label' => __('The board', 'draft-league-hub'),
+				'value' => sprintf(__('%d picks', 'draft-league-hub'), count($choices)),
+				'detail' => sprintf(_n('%d round', '%d rounds', $max_round, 'draft-league-hub'), $max_round),
+			),
+			array(
+				'label' => __('First overall', 'draft-league-hub'),
+				'value' => $first_choice['player_name'],
+				'detail' => $first_choice['entry_name'] ?? '',
+			),
+			array(
+				'label' => __('Final pick', 'draft-league-hub'),
+				'value' => $last_choice['player_name'],
+				'detail' => $last_choice['entry_name'] ?? '',
+			),
+			array(
+				'label' => __('Auto-picks', 'draft-league-hub'),
+				'value' => $auto_pick_count,
+				'detail' => $auto_pick_count ? __('Selections made by the timer', 'draft-league-hub') : __('Everyone beat the clock', 'draft-league-hub'),
+			),
+		);
+
+		ob_start();
+		?>
+		<section class="dlh-draft-recap" aria-labelledby="dlh-draft-recap-title">
+			<div class="dlh-draft-recap__head">
+				<div>
+					<p class="dlh-kicker"><?php echo esc_html(sprintf(__('%1$s draft%2$s', 'draft-league-hub'), $season['label'] ?? '', $draft_id ? ' · #' . $draft_id : '')); ?></p>
+					<h3 id="dlh-draft-recap-title"><?php echo esc_html__('Draft Recap', 'draft-league-hub'); ?></h3>
+					<p><?php echo esc_html__('The original snake draft, saved before waivers and trades start rewriting history.', 'draft-league-hub'); ?></p>
+				</div>
+				<span class="dlh-draft-recap__saved"><?php echo esc_html(sprintf(_n('%d manager', '%d managers', count($manager_groups), 'draft-league-hub'), count($manager_groups))); ?></span>
+			</div>
+
+			<div class="dlh-stats-grid dlh-draft-stats">
+				<?php foreach ($summary_cards as $card) : ?>
+					<article class="dlh-stat-card">
+						<p class="dlh-kicker"><?php echo esc_html($card['label']); ?></p>
+						<strong><?php echo esc_html($card['value']); ?></strong>
+						<?php if ($card['detail']) : ?><span><?php echo esc_html($card['detail']); ?></span><?php endif; ?>
+					</article>
+				<?php endforeach; ?>
+			</div>
+
+			<section class="dlh-draft-section" aria-labelledby="dlh-draft-order-title">
+				<div class="dlh-draft-section__head">
+					<div>
+						<h4 id="dlh-draft-order-title"><?php echo esc_html__('Draft order & opening picks', 'draft-league-hub'); ?></h4>
+						<p><?php echo esc_html__('The first-round order and each manager’s opening three selections.', 'draft-league-hub'); ?></p>
+					</div>
+				</div>
+				<div class="dlh-table-wrap dlh-draft-order">
+					<table class="dlh-table">
+						<thead><tr><th scope="col"><?php echo esc_html__('Slot', 'draft-league-hub'); ?></th><th scope="col"><?php echo esc_html__('Manager', 'draft-league-hub'); ?></th><th scope="col"><?php echo esc_html__('Team', 'draft-league-hub'); ?></th><th scope="col"><?php echo esc_html__('Opening three', 'draft-league-hub'); ?></th></tr></thead>
+						<tbody>
+							<?php foreach ($manager_groups as $manager) : ?>
+								<?php $opening_picks = array_slice(array_column($manager['choices'], 'player_name'), 0, 3); ?>
+								<tr>
+									<td><strong>#<?php echo esc_html($manager['draft_slot']); ?></strong></td>
+									<td><?php echo esc_html($manager['manager_name']); ?></td>
+									<td><?php echo esc_html($manager['team_name']); ?></td>
+									<td><?php echo esc_html(implode(' · ', $opening_picks)); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="dlh-draft-section" aria-labelledby="dlh-original-squads-title">
+				<div class="dlh-draft-section__head">
+					<div>
+						<h4 id="dlh-original-squads-title"><?php echo esc_html__('Original squads', 'draft-league-hub'); ?></h4>
+						<p><?php echo esc_html__('Open a team to see all 15 players in the order they were drafted.', 'draft-league-hub'); ?></p>
+					</div>
+				</div>
+				<div class="dlh-draft-squad-grid">
+					<?php foreach ($manager_groups as $manager) : ?>
+						<details class="dlh-draft-squad">
+							<summary>
+								<span><strong><?php echo esc_html($manager['team_name']); ?></strong><small><?php echo esc_html($manager['manager_name']); ?></small></span>
+								<b>#<?php echo esc_html($manager['draft_slot']); ?></b>
+							</summary>
+							<ol>
+								<?php foreach ($manager['choices'] as $choice) : ?>
+									<li>
+										<span><?php echo esc_html(sprintf(__('R%d', 'draft-league-hub'), absint($choice['round']))); ?></span>
+										<strong><?php echo esc_html($choice['player_name']); ?></strong>
+										<?php if (!empty($choice['was_auto'])) : ?><small><?php echo esc_html__('Auto', 'draft-league-hub'); ?></small><?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							</ol>
+						</details>
+					<?php endforeach; ?>
+				</div>
+			</section>
+
+			<details class="dlh-draft-board" open>
+				<summary><span><?php echo esc_html__('Full draft board', 'draft-league-hub'); ?></span><small><?php echo esc_html(sprintf(__('%1$d rounds · %2$d selections', 'draft-league-hub'), $max_round, count($choices))); ?></small></summary>
+				<div class="dlh-table-wrap">
+					<table class="dlh-table">
+						<thead>
+							<tr><th scope="col"><?php echo esc_html__('Round', 'draft-league-hub'); ?></th><?php for ($pick = 1; $pick <= $max_pick; $pick++) : ?><th scope="col"><?php echo esc_html(sprintf(__('Pick %d', 'draft-league-hub'), $pick)); ?></th><?php endfor; ?></tr>
+						</thead>
+						<tbody>
+							<?php for ($round = 1; $round <= $max_round; $round++) : ?>
+								<tr>
+									<th scope="row"><?php echo esc_html(sprintf(__('Round %d', 'draft-league-hub'), $round)); ?></th>
+									<?php for ($pick = 1; $pick <= $max_pick; $pick++) : ?>
+										<?php $choice = $rounds[$round][$pick] ?? array(); ?>
+										<td>
+											<?php if ($choice) : ?>
+												<small>#<?php echo esc_html($choice['index']); ?> · <?php echo esc_html($choice['entry_name']); ?></small>
+												<strong><?php echo esc_html($choice['player_name']); ?></strong>
+												<?php if (!empty($choice['was_auto'])) : ?><em><?php echo esc_html__('Auto-pick', 'draft-league-hub'); ?></em><?php endif; ?>
+											<?php else : ?>&mdash;<?php endif; ?>
+										</td>
+									<?php endfor; ?>
+								</tr>
+							<?php endfor; ?>
+						</tbody>
+					</table>
+				</div>
+			</details>
+		</section>
+		<?php
+		return ob_get_clean();
+	}
+
+
+	private function draft_choice_player_name($choice, $player_map) {
+		$player_id = absint($choice['element'] ?? 0);
+		if ($player_id && isset($player_map[$player_id])) {
+			return $this->player_name($player_map, $player_id);
+		}
+
+		return $player_id ? sprintf(__('Player #%d', 'draft-league-hub'), $player_id) : __('Unknown player', 'draft-league-hub');
+	}
+
+
+	private function draft_choice_manager_name($choice) {
+		$name = trim(($choice['player_first_name'] ?? '') . ' ' . ($choice['player_last_name'] ?? ''));
+		return $name ? $name : __('Unknown manager', 'draft-league-hub');
+	}
+
+
+	private function render_standings($details, $transactions = array(), $trades = array(), $bootstrap = array(), $allow_live_extremes = true, $is_saved_copy = false) {
 		$league = $details['league']['name'] ?? '';
 		$entries = $details['league_entries'] ?? array();
 		$entry_maps = $this->build_entry_maps($entries);
@@ -305,7 +536,8 @@ trait DLH_Renderers {
 			return ob_get_clean();
 		}
 
-		echo $this->render_fpl_stat_cards($details, $standings, $league_entry_map, $public_entry_map, $player_map, $transactions, $trades); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$latest_event = $this->latest_available_gameweek($bootstrap['events'] ?? array());
+		echo $this->render_fpl_stat_cards($details, $standings, $league_entry_map, $public_entry_map, $player_map, $transactions, $trades, $allow_live_extremes, $latest_event); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		echo '<div class="dlh-table-wrap"><table class="dlh-table">';
 		echo '<thead><tr><th>' . esc_html__('Rank', 'draft-league-hub') . '</th><th>' . esc_html__('Team', 'draft-league-hub') . '</th><th>' . esc_html__('Manager', 'draft-league-hub') . '</th><th>' . esc_html__('GW', 'draft-league-hub') . '</th><th>' . esc_html__('Total', 'draft-league-hub') . '</th></tr></thead><tbody>';
@@ -333,13 +565,13 @@ trait DLH_Renderers {
 		}
 
 		echo '</tbody></table></div>';
-		echo '<p class="dlh-footnote">' . esc_html__('Data is cached to keep the FPL Draft API happy.', 'draft-league-hub') . '</p>';
+		echo '<p class="dlh-footnote">' . esc_html($is_saved_copy ? __('This table is stored locally as part of the season archive.', 'draft-league-hub') : __('Data is cached to keep the FPL Draft API happy.', 'draft-league-hub')) . '</p>';
 
 		return ob_get_clean();
 	}
 
 
-	private function render_fpl_stat_cards($details, $standings, $league_entry_map, $public_entry_map, $player_map, $transactions_data, $trades_data) {
+	private function render_fpl_stat_cards($details, $standings, $league_entry_map, $public_entry_map, $player_map, $transactions_data, $trades_data, $allow_live_extremes = true, $latest_event = 0) {
 		$transactions = $transactions_data['transactions'] ?? array();
 		$trades = $trades_data['trades'] ?? array();
 		$accepted_transactions = array_values(
@@ -353,7 +585,7 @@ trait DLH_Renderers {
 		$trade_rows = is_array($trades) ? $trades : array();
 		$cards = array();
 
-		$season_extremes = $this->season_gameweek_extremes($details, $public_entry_map);
+		$season_extremes = $allow_live_extremes ? $this->season_gameweek_extremes($details, $public_entry_map, $latest_event) : array('high' => null, 'low' => null);
 		if (!empty($season_extremes['high'])) {
 			$cards[] = array(
 				'label' => __('Season GW High', 'draft-league-hub'),
@@ -484,11 +716,29 @@ trait DLH_Renderers {
 	}
 
 
-	private function season_gameweek_extremes($details, $entry_map) {
+	private function latest_available_gameweek($events) {
+		$latest = 0;
+		foreach ((array) $events as $event) {
+			if (!is_array($event) || (empty($event['finished']) && empty($event['is_current']))) {
+				continue;
+			}
+
+			$latest = max($latest, absint($event['id'] ?? 0));
+		}
+
+		return $latest;
+	}
+
+
+	private function season_gameweek_extremes($details, $entry_map, $latest_event = 0) {
 		$league = $details['league'] ?? array();
 		$league_id = absint($league['id'] ?? 0);
 		$start_event = max(1, absint($league['start_event'] ?? 1));
-		$stop_event = max($start_event, absint($league['stop_event'] ?? 38));
+		$league_stop_event = max($start_event, absint($league['stop_event'] ?? 38));
+		$stop_event = min($league_stop_event, absint($latest_event));
+		if ($stop_event < $start_event) {
+			return array('high' => null, 'low' => null);
+		}
 		$cache_key = 'dlh_season_gw_extremes_' . md5($league_id . ':' . $start_event . ':' . $stop_event . ':' . count($entry_map));
 		$cached = get_transient($cache_key);
 

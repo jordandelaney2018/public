@@ -277,7 +277,7 @@ trait DLH_Admin {
 				<li><code>[dlh_sidebets]</code> <?php echo esc_html__('Sidebet board and submission form', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_hall_of_fame]</code> <?php echo esc_html__('Funny pictures, videos, and receipts', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_calendar]</code> <?php echo esc_html__('Upcoming draft dates', 'draft-league-hub'); ?></li>
-				<li><code>[dlh_stats]</code> <?php echo esc_html__('Cached FPL Draft league standings widget', 'draft-league-hub'); ?></li>
+				<li><code>[dlh_stats]</code> <?php echo esc_html__('Seasonal Data Hub with standings, stats, and the saved draft recap', 'draft-league-hub'); ?></li>
 			</ul>
 		</div>
 		<?php
