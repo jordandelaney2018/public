@@ -508,7 +508,7 @@
 .dlh-winner-grid {
 	display: grid;
 	gap: 1rem;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .dlh-winner-card {
@@ -1457,11 +1457,18 @@
 	}
 }
 
+@media (max-width: 900px) {
+	.dlh-winner-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
 @media (max-width: 760px) {
 	.dlh-hero,
 	.dlh-grid--two,
 	.dlh-calendar-event,
-	.dlh-availability__row {
+	.dlh-availability__row,
+	.dlh-winner-grid {
 		grid-template-columns: 1fr;
 	}
 
