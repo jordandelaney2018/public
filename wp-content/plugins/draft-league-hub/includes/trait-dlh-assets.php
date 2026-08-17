@@ -17,7 +17,7 @@ trait DLH_Assets {
 
 
 	public function enqueue_admin_assets($hook) {
-		if ('dlh_manager_page_dlh-group-picks' === $hook) {
+		if (in_array($hook, array('dlh_manager_page_dlh-group-picks', 'dlh_manager_page_dlh-draft-cup'), true)) {
 			wp_enqueue_style(
 				'dlh-admin-styles',
 				DLH_PLUGIN_URL . 'assets/admin.css',

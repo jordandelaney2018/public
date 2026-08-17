@@ -16,6 +16,7 @@ trait DLH_Admin {
 		);
 
 		$this->register_group_picks_admin_page();
+		$this->register_draft_cup_admin_page();
 	}
 
 
@@ -281,6 +282,7 @@ trait DLH_Admin {
 				<li><code>[dlh_calendar]</code> <?php echo esc_html__('Upcoming draft dates', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_stats]</code> <?php echo esc_html__('Seasonal Data Hub with standings, stats, and the saved draft recap', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_group_picks]</code> <?php echo esc_html__('Groupie Picks win-percentage leaderboard and history', 'draft-league-hub'); ?></li>
+				<li><code>[dlh_draft_cup]</code> <?php echo esc_html__('Seasonal 12-team Draft Cup bracket', 'draft-league-hub'); ?></li>
 			</ul>
 		</div>
 		<?php

@@ -107,7 +107,7 @@ function draft_league_theme_page_has_hub_shortcode($post = null) {
 		return false;
 	}
 
-	foreach (array('dlh_home', 'dlh_news', 'dlh_monthly_votes', 'dlh_sidebets', 'dlh_hall_of_fame', 'dlh_calendar', 'dlh_stats', 'dlh_group_picks') as $shortcode) {
+	foreach (array('dlh_home', 'dlh_news', 'dlh_monthly_votes', 'dlh_sidebets', 'dlh_hall_of_fame', 'dlh_calendar', 'dlh_stats', 'dlh_group_picks', 'dlh_draft_cup') as $shortcode) {
 		if (has_shortcode($post->post_content, $shortcode)) {
 			return true;
 		}

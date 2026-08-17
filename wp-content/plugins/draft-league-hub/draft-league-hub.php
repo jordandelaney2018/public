@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Draft League Hub
  * Description: A small WordPress hub for FPL Draft leagues: joke news, monthly votes, sidebets, availability polls, and FPL Draft API widgets.
- * Version: 0.3.1
+ * Version: 0.4.0
  * Author: Codex
  * Text Domain: draft-league-hub
  */
@@ -23,6 +23,7 @@ require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-shortcodes.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-options.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-seasons.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-group-picks.php';
+require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-draft-cup.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-votes.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-renderers.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-api.php';
@@ -37,13 +38,14 @@ final class DLH_Plugin {
 	use DLH_Options;
 	use DLH_Seasons;
 	use DLH_Group_Picks;
+	use DLH_Draft_Cup;
 	use DLH_Votes;
 	use DLH_Renderers;
 	use DLH_Api;
 	use DLH_Helpers;
 
-	const VERSION = '0.3.1';
-	const SCHEMA_VERSION = '1.1.0';
+	const VERSION = '0.4.0';
+	const SCHEMA_VERSION = '1.2.0';
 	const OPTION = 'dlh_options';
 	const CRON_HOOK = 'dlh_daily_maintenance';
 
@@ -81,6 +83,7 @@ final class DLH_Plugin {
 		add_shortcode('dlh_calendar', array($this, 'shortcode_calendar'));
 		add_shortcode('dlh_stats', array($this, 'shortcode_stats'));
 		add_shortcode('dlh_group_picks', array($this, 'shortcode_group_picks'));
+		add_shortcode('dlh_draft_cup', array($this, 'shortcode_draft_cup'));
 	}
 
 	public static function activate() {
@@ -100,6 +103,7 @@ final class DLH_Plugin {
 
 	public function daily_maintenance() {
 		$this->ensure_current_vote_month();
+		$this->maybe_refresh_current_draft_cup();
 	}
 }
 

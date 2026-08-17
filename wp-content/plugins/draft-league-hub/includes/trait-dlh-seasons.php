@@ -23,6 +23,8 @@ trait DLH_Seasons {
 		$table_name = $this->seasons_table_name();
 		$events_table = $this->group_pick_events_table_name();
 		$entries_table = $this->group_pick_entries_table_name();
+		$cups_table = $this->draft_cups_table_name();
+		$ties_table = $this->draft_cup_ties_table_name();
 		$charset_collate = $wpdb->get_charset_collate();
 		$sql = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -67,11 +69,49 @@ trait DLH_Seasons {
 			KEY manager_result (manager_id, result),
 			KEY result (result)
 		) {$charset_collate};";
+		$cups_sql = "CREATE TABLE {$cups_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			season_id bigint(20) unsigned NOT NULL,
+			name varchar(190) NOT NULL,
+			start_gameweek tinyint(3) unsigned NOT NULL,
+			status varchar(12) NOT NULL DEFAULT 'scheduled',
+			champion_manager_id bigint(20) unsigned DEFAULT NULL,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY season_id (season_id),
+			KEY status (status)
+		) {$charset_collate};";
+		$ties_sql = "CREATE TABLE {$ties_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			cup_id bigint(20) unsigned NOT NULL,
+			round_number tinyint(3) unsigned NOT NULL,
+			match_number tinyint(3) unsigned NOT NULL,
+			gameweek tinyint(3) unsigned NOT NULL,
+			manager_a_id bigint(20) unsigned DEFAULT NULL,
+			manager_b_id bigint(20) unsigned DEFAULT NULL,
+			source_a_tie_id bigint(20) unsigned DEFAULT NULL,
+			source_b_tie_id bigint(20) unsigned DEFAULT NULL,
+			score_a smallint(6) DEFAULT NULL,
+			score_b smallint(6) DEFAULT NULL,
+			winner_manager_id bigint(20) unsigned DEFAULT NULL,
+			status varchar(12) NOT NULL DEFAULT 'scheduled',
+			score_updated_at datetime DEFAULT NULL,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY cup_round_match (cup_id, round_number, match_number),
+			KEY cup_gameweek (cup_id, gameweek),
+			KEY source_a_tie_id (source_a_tie_id),
+			KEY source_b_tie_id (source_b_tie_id)
+		) {$charset_collate};";
 
+		dbDelta($cups_sql);
+		dbDelta($ties_sql);
 		dbDelta($events_sql);
 		dbDelta($entries_sql);
 		$this->seasons_table_ready = null;
-		if ($this->seasons_table_exists() && $this->group_pick_tables_exist()) {
+		if ($this->seasons_table_exists() && $this->group_pick_tables_exist() && $this->draft_cup_tables_exist()) {
 			update_option('dlh_schema_version', self::SCHEMA_VERSION);
 		}
 	}

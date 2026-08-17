@@ -64,3 +64,103 @@
 .dlh-picks-admin__recent {
 	max-width: 1180px;
 }
+
+.dlh-cup-admin__setup,
+.dlh-cup-admin__scores {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-sizing: border-box;
+	margin: 20px 0;
+	max-width: 1240px;
+	padding: 20px;
+}
+
+.dlh-cup-admin__setup h2,
+.dlh-cup-admin__scores h2 {
+	margin-top: 0;
+}
+
+.dlh-cup-admin__summary {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	margin: 20px 0;
+	max-width: 1240px;
+}
+
+.dlh-cup-admin__summary > div {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	display: grid;
+	gap: 4px;
+	padding: 14px;
+}
+
+.dlh-cup-admin__summary span {
+	color: #646970;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.dlh-cup-admin__summary strong {
+	font-size: 18px;
+}
+
+.dlh-cup-admin__refresh {
+	align-items: center;
+	display: flex;
+	gap: 12px;
+	margin: 18px 0;
+}
+
+.dlh-cup-admin__table-wrap {
+	overflow-x: auto;
+}
+
+.dlh-cup-admin__table {
+	min-width: 1080px;
+}
+
+.dlh-cup-admin__table input[type="number"] {
+	width: 78px;
+}
+
+.dlh-cup-admin__table select {
+	max-width: 200px;
+	width: 100%;
+}
+
+.dlh-cup-admin__status {
+	border: 1px solid #8c8f94;
+	border-radius: 999px;
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 700;
+	padding: 3px 8px;
+	white-space: nowrap;
+}
+
+.dlh-cup-admin__status--complete {
+	background: #edfaef;
+	border-color: #46b450;
+	color: #185b1e;
+}
+
+.dlh-cup-admin__status--live {
+	background: #fff8e5;
+	border-color: #dba617;
+	color: #6b4b00;
+}
+
+.dlh-cup-admin__status--tied {
+	background: #fcf0f1;
+	border-color: #d63638;
+	color: #8a1f21;
+}
+
+@media (max-width: 900px) {
+	.dlh-cup-admin__summary {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}

@@ -1117,6 +1117,235 @@
 	color: #8a6200;
 }
 
+.dlh-cup-hero {
+	align-items: stretch;
+	background:
+		radial-gradient(circle at 20% 15%, rgba(243, 201, 77, 0.18), transparent 30%),
+		linear-gradient(135deg, var(--dlh-navy), #0b3029);
+	border: 1px solid rgba(216, 169, 40, 0.6);
+	border-radius: 8px;
+	color: #ffffff;
+	display: flex;
+	gap: 2rem;
+	justify-content: space-between;
+	min-height: 190px;
+	overflow: hidden;
+	padding: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+.dlh-cup-hero > div:first-child {
+	align-content: center;
+	display: grid;
+	gap: 0.35rem;
+}
+
+.dlh-cup-hero > div:first-child > span,
+.dlh-cup-champion span {
+	color: var(--dlh-gold-bright);
+	font-size: 0.72rem;
+	font-weight: 900;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.dlh-cup-hero h3 {
+	color: inherit;
+	font-size: clamp(1.75rem, 5vw, 3rem);
+	line-height: 1;
+	margin: 0.2rem 0;
+}
+
+.dlh-cup-hero p {
+	color: rgba(255, 255, 255, 0.72);
+	font-weight: 700;
+	margin: 0;
+}
+
+.dlh-cup-trophy {
+	align-items: center;
+	color: var(--dlh-gold-bright);
+	display: flex;
+	font-size: clamp(4rem, 12vw, 7rem);
+	filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.24));
+	justify-content: center;
+	line-height: 1;
+	min-width: 140px;
+}
+
+.dlh-cup-champion {
+	align-content: center;
+	background: rgba(255, 255, 255, 0.08);
+	border-left: 1px solid rgba(243, 201, 77, 0.35);
+	display: grid;
+	min-width: min(340px, 42%);
+	padding: 1rem 0 1rem 2rem;
+}
+
+.dlh-cup-champion strong {
+	font-size: clamp(1.4rem, 4vw, 2.25rem);
+	line-height: 1.05;
+}
+
+.dlh-cup-champion small {
+	color: rgba(255, 255, 255, 0.7);
+	font-weight: 700;
+	margin-top: 0.35rem;
+}
+
+.dlh-cup-byes {
+	align-items: center;
+	background: var(--dlh-soft);
+	border: 1px solid var(--dlh-line);
+	border-radius: 8px;
+	display: flex;
+	gap: 1rem;
+	justify-content: space-between;
+	padding: 1rem;
+}
+
+.dlh-cup-byes > div:first-child {
+	display: grid;
+}
+
+.dlh-cup-byes > div:first-child span {
+	color: var(--dlh-green);
+	font-size: 0.72rem;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+.dlh-cup-byes__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	justify-content: flex-end;
+}
+
+.dlh-cup-byes__list span {
+	background: var(--dlh-paper);
+	border: 1px solid var(--dlh-line);
+	border-radius: 999px;
+	font-size: 0.78rem;
+	font-weight: 800;
+	padding: 0.4rem 0.65rem;
+}
+
+.dlh-cup-bracket-wrap {
+	overflow-x: auto;
+	padding: 0.35rem 0 1rem;
+}
+
+.dlh-cup-bracket {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(4, minmax(225px, 1fr));
+	min-width: 1000px;
+}
+
+.dlh-cup-round {
+	min-width: 0;
+}
+
+.dlh-cup-round > header {
+	border-bottom: 2px solid var(--dlh-gold);
+	display: grid;
+	margin-bottom: 0.85rem;
+	padding-bottom: 0.6rem;
+}
+
+.dlh-cup-round > header span {
+	color: var(--dlh-muted);
+	font-size: 0.7rem;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+.dlh-cup-round > header h3 {
+	font-size: 1.05rem;
+	margin: 0.1rem 0 0;
+}
+
+.dlh-cup-round__ties {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	height: calc(100% - 54px);
+	justify-content: space-around;
+}
+
+.dlh-cup-tie {
+	background: var(--dlh-paper);
+	border: 1px solid var(--dlh-line);
+	border-left: 4px solid var(--dlh-muted);
+	border-radius: 8px;
+	box-shadow: 0 10px 24px rgba(6, 20, 33, 0.07);
+	overflow: hidden;
+}
+
+.dlh-cup-tie--live {
+	border-left-color: var(--dlh-gold);
+}
+
+.dlh-cup-tie--complete {
+	border-left-color: var(--dlh-green);
+}
+
+.dlh-cup-tie--tied {
+	border-left-color: var(--dlh-red);
+}
+
+.dlh-cup-tie__meta {
+	background: var(--dlh-soft);
+	color: var(--dlh-muted);
+	display: flex;
+	font-size: 0.66rem;
+	font-weight: 900;
+	justify-content: space-between;
+	padding: 0.42rem 0.65rem;
+	text-transform: uppercase;
+}
+
+.dlh-cup-team {
+	align-items: center;
+	display: grid;
+	gap: 0.55rem;
+	grid-template-columns: minmax(0, 1fr) auto;
+	min-height: 62px;
+	padding: 0.6rem 0.7rem;
+}
+
+.dlh-cup-team + .dlh-cup-team {
+	border-top: 1px solid var(--dlh-line);
+}
+
+.dlh-cup-team.is-winner {
+	background: #e7f5ee;
+}
+
+.dlh-cup-team > div {
+	display: grid;
+	min-width: 0;
+}
+
+.dlh-cup-team strong,
+.dlh-cup-team small {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dlh-cup-team small {
+	color: var(--dlh-muted);
+	font-size: 0.7rem;
+}
+
+.dlh-cup-team > span {
+	font-size: 1.25rem;
+	font-weight: 900;
+	min-width: 1.5rem;
+	text-align: center;
+}
+
 @keyframes dlh-hero-sweep {
 	0% {
 		transform: translateX(-70%);
@@ -1193,6 +1422,27 @@
 		border-left: 0;
 		padding-left: 0;
 		padding-right: 0;
+	}
+
+	.dlh-cup-hero,
+	.dlh-cup-byes {
+		display: grid;
+	}
+
+	.dlh-cup-champion {
+		border-left: 0;
+		border-top: 1px solid rgba(243, 201, 77, 0.35);
+		min-width: 0;
+		padding: 1rem 0 0;
+	}
+
+	.dlh-cup-byes__list {
+		justify-content: flex-start;
+	}
+
+	.dlh-cup-trophy {
+		justify-content: start;
+		min-width: 0;
 	}
 }
 

@@ -59,12 +59,12 @@ trait DLH_Options {
 
 	public function maybe_upgrade_content() {
 		$content_version = get_option('dlh_content_version', '0.1.0');
-		if (version_compare($content_version, '0.3.1', '>=')) {
+		if (version_compare($content_version, '0.4.0', '>=')) {
 			return;
 		}
 
 		$this->create_default_pages();
-		update_option('dlh_content_version', '0.3.1');
+		update_option('dlh_content_version', '0.4.0');
 		flush_rewrite_rules(false);
 	}
 
@@ -80,16 +80,14 @@ trait DLH_Options {
 			'calendar' => array('title' => 'Calendar', 'slug' => 'calendar', 'shortcode' => '[dlh_calendar]'),
 			'stats' => array('title' => 'Data Hub', 'slug' => 'league-stats', 'shortcode' => '[dlh_stats]'),
 			'group_picks' => array('title' => 'Groupie Picks', 'slug' => 'group-picks', 'shortcode' => '[dlh_group_picks]'),
+			'draft_cup' => array('title' => 'Draft Cup', 'slug' => 'draft-cup', 'shortcode' => '[dlh_draft_cup]'),
 		);
 
 		foreach ($pages as $key => $page) {
 			$existing = get_page_by_path($page['slug']);
 			if ($existing) {
-				if ('group_picks' === $key && get_post_meta($existing->ID, '_dlh_created_page', true) && $page['title'] !== $existing->post_title) {
-					wp_update_post(array('ID' => $existing->ID, 'post_title' => $page['title']));
-				}
 				$options['page_ids'][$key] = $existing->ID;
-				if (in_array($key, array('stats', 'group_picks'), true) && get_post_meta($existing->ID, '_dlh_created_page', true) && $page['title'] !== $existing->post_title) {
+				if (in_array($key, array('stats', 'group_picks', 'draft_cup'), true) && get_post_meta($existing->ID, '_dlh_created_page', true) && $page['title'] !== $existing->post_title) {
 					wp_update_post(
 						array(
 							'ID' => $existing->ID,
@@ -131,6 +129,7 @@ trait DLH_Options {
 			'calendar' => __('Calendar', 'draft-league-hub'),
 			'stats' => __('Data Hub', 'draft-league-hub'),
 			'group_picks' => __('Groupie Picks', 'draft-league-hub'),
+			'draft_cup' => __('Draft Cup', 'draft-league-hub'),
 		);
 		$links = array();
 

@@ -13,6 +13,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - Season records and locally stored FPL Draft snapshots for safe annual rollover.
 - Season tabs and a complete draft recap with the order, original squads, and full board.
 - Season-aware Groupie Picks rounds with a public win-percentage leaderboard.
+- A season-aware 12-team Draft Cup with a random draw and knockout bracket.
 
 ## Install
 
@@ -45,6 +46,7 @@ season first and cancels the rollover if the standings cannot be saved.
 - `[dlh_calendar]` - upcoming draft dates.
 - `[dlh_stats]` - seasonal Data Hub, FPL Draft standings, and saved draft recap.
 - `[dlh_group_picks]` - Groupie Picks leaderboard and round history.
+- `[dlh_draft_cup]` - Draft Cup bracket and results.
 
 ## Groupie Picks
 
@@ -52,6 +54,17 @@ Open **Managers > Groupie Picks** to add a round. Each round has a title, date,
 optional gameweek, and one pick/result row for every manager. Pending and void
 picks stay in the history but only wins and losses count towards win percentage.
 Managers with fewer than three graded picks are labelled provisional.
+
+## Draft Cup
+
+Open **Managers > Draft Cup**, choose a starting gameweek, and create the draw.
+Eight managers play in the opening round while four receive random byes. The
+quarter-finals, semi-finals, and final follow over the next three gameweeks.
+
+Use **Refresh scores from FPL** after matches begin. Winners are advanced only
+after a gameweek is marked finished by FPL. Manual score and tie-break controls
+are available if the API is unavailable or a tie finishes level. The daily
+maintenance task also checks an active cup automatically.
 
 ## FPL Draft API
 
