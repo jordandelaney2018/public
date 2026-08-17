@@ -530,7 +530,7 @@
 .dlh-winner-card__photo img,
 .dlh-winner-card__placeholder {
 	display: block;
-	height: auto;
+	height: 400px;
 	object-fit: cover;
 	object-position: center top;
 	width: 100%;
