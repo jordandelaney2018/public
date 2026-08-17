@@ -191,8 +191,10 @@ trait DLH_Renderers {
 		ob_start();
 		echo '<article class="dlh-winner-card">';
 		echo '<div class="dlh-winner-card__photo">';
-		if (has_post_thumbnail($post_id)) {
-			echo get_the_post_thumbnail($post_id, 'large', array('alt' => $name, 'loading' => 'lazy')); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$thumbnail_id = get_post_thumbnail_id($post_id);
+		$full_image = $thumbnail_id ? wp_get_attachment_image_src($thumbnail_id, 'full') : false;
+		if ($full_image) {
+			echo '<img src="' . esc_url($full_image[0]) . '" width="' . esc_attr($full_image[1]) . '" height="' . esc_attr($full_image[2]) . '" alt="' . esc_attr($name) . '" loading="lazy" decoding="async">';
 		} else {
 			echo '<div class="dlh-winner-card__placeholder">' . esc_html__('Photo to follow', 'draft-league-hub') . '</div>';
 		}

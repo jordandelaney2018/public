@@ -16,6 +16,10 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - Season-aware Groupie Picks rounds with a public win-percentage leaderboard.
 - A season-aware 12-team Draft Cup with a random draw and knockout bracket.
 
+Past Winner cards serve the original uploaded photo rather than a recompressed
+WordPress derivative. For sharp cards, use portrait originals at least
+800 × 1200 pixels; genuinely low-resolution source images still need replacing.
+
 ## Install
 
 1. Zip the `draft-league-hub` folder, or upload the provided `draft-league-hub.zip`.

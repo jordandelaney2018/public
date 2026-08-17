@@ -435,11 +435,24 @@ trait DLH_Admin {
 	public function render_past_winner_meta_box($post) {
 		wp_nonce_field('dlh_save_past_winner_meta', 'dlh_past_winner_nonce');
 		$year = get_post_meta($post->ID, 'dlh_winner_year', true);
+		$thumbnail_id = get_post_thumbnail_id($post->ID);
+		$image_meta = $thumbnail_id ? wp_get_attachment_metadata($thumbnail_id) : array();
+		$image_width = absint($image_meta['width'] ?? 0);
+		$image_height = absint($image_meta['height'] ?? 0);
 
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr><th scope="row"><label for="dlh_winner_year">' . esc_html__('Season / year won', 'draft-league-hub') . '</label></th><td>';
 		echo '<input type="text" class="regular-text" id="dlh_winner_year" name="dlh_winner_year" value="' . esc_attr($year) . '" maxlength="20" placeholder="' . esc_attr__('2025/26', 'draft-league-hub') . '" required>';
-		echo '<p class="description">' . esc_html__('Use the post title for the winner’s name and set their photo in the Featured image panel.', 'draft-league-hub') . '</p>';
+		echo '<p class="description">' . esc_html__('Use the post title for the winner’s name and set their photo in the Featured image panel. For a sharp card, upload the original photo at 800 × 1200 pixels or larger.', 'draft-league-hub') . '</p>';
+		if ($thumbnail_id && $image_width && $image_height) {
+			echo '<p class="description"><strong>' . esc_html(sprintf(__('Current original: %1$d × %2$d pixels.', 'draft-league-hub'), $image_width, $image_height)) . '</strong> ';
+			if ($image_width < 800 || $image_height < 1200) {
+				echo esc_html__('This image is below the recommended size and may still look blurry; replace it with a larger original.', 'draft-league-hub');
+			} else {
+				echo esc_html__('This is large enough for the winner card.', 'draft-league-hub');
+			}
+			echo '</p>';
+		}
 		echo '</td></tr></table>';
 	}
 
