@@ -479,25 +479,50 @@ trait DLH_Group_Picks {
 						</tbody>
 					</table>
 				</div>
+				<ol class="dlh-picks-mobile" aria-label="<?php echo esc_attr__('Win percentage leaderboard', 'draft-league-hub'); ?>">
+					<?php foreach ($leaderboard as $index => $row) : ?>
+						<li class="dlh-picks-mobile__card">
+							<div class="dlh-picks-mobile__head">
+								<span class="dlh-picks-mobile__rank" aria-label="<?php echo esc_attr(sprintf(__('Rank %d', 'draft-league-hub'), $index + 1)); ?>">#<?php echo esc_html($index + 1); ?></span>
+								<div class="dlh-picks-mobile__manager">
+									<strong><?php echo esc_html($row['name']); ?></strong>
+									<?php if ($row['team_name']) : ?><small><?php echo esc_html($row['team_name']); ?></small><?php endif; ?>
+								</div>
+								<div class="dlh-picks-mobile__percentage">
+									<strong><?php echo esc_html(null === $row['win_percentage'] ? '—' : number_format_i18n($row['win_percentage'], 1) . '%'); ?></strong>
+									<span><?php echo esc_html__('Win rate', 'draft-league-hub'); ?></span>
+									<?php if ($row['graded'] > 0 && $row['graded'] < 3) : ?><small><?php echo esc_html__('Provisional', 'draft-league-hub'); ?></small><?php endif; ?>
+								</div>
+							</div>
+							<div class="dlh-picks-mobile__record">
+								<span><strong><?php echo esc_html($row['wins']); ?></strong> <?php echo esc_html(_n('win', 'wins', $row['wins'], 'draft-league-hub')); ?></span>
+								<span><strong><?php echo esc_html($row['losses']); ?></strong> <?php echo esc_html(_n('loss', 'losses', $row['losses'], 'draft-league-hub')); ?></span>
+								<span><strong><?php echo esc_html($row['graded']); ?></strong> <?php echo esc_html__('graded', 'draft-league-hub'); ?></span>
+								<?php if ($row['voids']) : ?><span><strong><?php echo esc_html($row['voids']); ?></strong> <?php echo esc_html__('void', 'draft-league-hub'); ?></span><?php endif; ?>
+								<?php if ($row['pending']) : ?><span><strong><?php echo esc_html($row['pending']); ?></strong> <?php echo esc_html__('pending', 'draft-league-hub'); ?></span><?php endif; ?>
+							</div>
+						</li>
+					<?php endforeach; ?>
+				</ol>
 			</section>
 
 			<section>
 				<div class="dlh-section__head"><div><h3><?php echo esc_html__('Recent picks', 'draft-league-hub'); ?></h3><p><?php echo esc_html__('The latest rounds and how every call finished.', 'draft-league-hub'); ?></p></div></div>
 				<div class="dlh-pick-history">
 				<?php if ($events) : ?>
-					<?php foreach ($events as $event) : ?>
-						<article class="dlh-panel dlh-pick-event">
-							<header class="dlh-pick-event__head">
+					<?php foreach ($events as $event_index => $event) : ?>
+						<details class="dlh-panel dlh-pick-event"<?php echo 0 === $event_index ? ' open' : ''; ?>>
+							<summary class="dlh-pick-event__head">
 								<div><span><?php echo esc_html(mysql2date(get_option('date_format'), $event['event_date'])); ?><?php if (!empty($event['gameweek'])) : ?> · <?php echo esc_html(sprintf(__('GW%d', 'draft-league-hub'), absint($event['gameweek']))); ?><?php endif; ?></span><h4><?php echo esc_html($event['title']); ?></h4></div>
-								<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d pick', '%d picks', absint($event['entry_count']), 'draft-league-hub'), absint($event['entry_count']))); ?></span>
-							</header>
+								<span class="dlh-pick-event__meta"><span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d pick', '%d picks', absint($event['entry_count']), 'draft-league-hub'), absint($event['entry_count']))); ?></span><span class="dlh-pick-event__toggle" aria-hidden="true"></span></span>
+							</summary>
 							<?php if (!empty($event['notes'])) : ?><p class="dlh-pick-event__notes"><?php echo esc_html($event['notes']); ?></p><?php endif; ?>
 							<div class="dlh-pick-event__entries">
 							<?php foreach ($this->get_group_pick_entries_for_event($event['id']) as $entry) : ?>
 								<div class="dlh-pick-entry"><div><strong><?php echo esc_html($this->manager_name($entry['manager_id'])); ?></strong><span><?php echo esc_html($entry['pick_text']); ?></span></div><span class="dlh-pick-result dlh-pick-result--<?php echo esc_attr($entry['result']); ?>"><?php echo esc_html($this->group_pick_results()[$entry['result']] ?? ucfirst($entry['result'])); ?></span></div>
 							<?php endforeach; ?>
 							</div>
-						</article>
+						</details>
 					<?php endforeach; ?>
 				<?php else : ?>
 					<div class="dlh-empty"><?php echo esc_html__('No picks have been recorded for this view yet. The leaderboard is ready when the first round is entered.', 'draft-league-hub'); ?></div>

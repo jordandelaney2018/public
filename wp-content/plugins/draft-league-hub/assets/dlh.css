@@ -1115,6 +1115,98 @@
 	text-transform: uppercase;
 }
 
+.dlh-picks-mobile {
+	display: none;
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+}
+
+.dlh-picks-mobile__card {
+	background: var(--dlh-paper);
+	border: 1px solid var(--dlh-line);
+	border-radius: 8px;
+	box-shadow: 0 8px 18px rgba(6, 20, 33, 0.06);
+	padding: 0.85rem;
+}
+
+.dlh-picks-mobile__head {
+	align-items: center;
+	display: grid;
+	gap: 0.7rem;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.dlh-picks-mobile__rank {
+	align-items: center;
+	background: var(--dlh-soft);
+	border: 1px solid var(--dlh-line);
+	border-radius: 999px;
+	display: inline-flex;
+	font-weight: 900;
+	height: 2rem;
+	justify-content: center;
+	width: 2rem;
+}
+
+.dlh-picks-mobile__manager,
+.dlh-picks-mobile__percentage {
+	display: grid;
+	min-width: 0;
+}
+
+.dlh-picks-mobile__manager strong {
+	font-size: 1rem;
+}
+
+.dlh-picks-mobile__manager small {
+	color: var(--dlh-muted);
+	font-size: 0.76rem;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}
+
+.dlh-picks-mobile__percentage {
+	justify-items: end;
+	text-align: right;
+}
+
+.dlh-picks-mobile__percentage strong {
+	color: var(--dlh-green);
+	font-size: 1.15rem;
+	line-height: 1;
+}
+
+.dlh-picks-mobile__percentage span,
+.dlh-picks-mobile__percentage small {
+	color: var(--dlh-muted);
+	font-size: 0.62rem;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+
+.dlh-picks-mobile__record {
+	border-top: 1px solid var(--dlh-line);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.7rem;
+	padding-top: 0.65rem;
+}
+
+.dlh-picks-mobile__record span {
+	background: var(--dlh-soft);
+	border-radius: 999px;
+	color: var(--dlh-muted);
+	font-size: 0.72rem;
+	font-weight: 700;
+	padding: 0.28rem 0.48rem;
+}
+
+.dlh-picks-mobile__record strong {
+	color: var(--dlh-ink);
+}
+
 .dlh-pick-history {
 	display: grid;
 	gap: 1rem;
@@ -1123,9 +1215,47 @@
 
 .dlh-pick-event__head {
 	align-items: start;
+	cursor: pointer;
 	display: flex;
 	gap: 1rem;
 	justify-content: space-between;
+	list-style: none;
+}
+
+.dlh-pick-event__head::-webkit-details-marker {
+	display: none;
+}
+
+.dlh-pick-event__head:focus-visible {
+	outline: 3px solid rgba(216, 169, 40, 0.45);
+	outline-offset: 4px;
+}
+
+.dlh-pick-event__meta {
+	align-items: center;
+	display: flex;
+	flex: 0 0 auto;
+	gap: 0.5rem;
+}
+
+.dlh-pick-event__toggle {
+	align-items: center;
+	border: 1px solid var(--dlh-line);
+	border-radius: 999px;
+	display: inline-flex;
+	font-size: 1rem;
+	font-weight: 900;
+	height: 1.8rem;
+	justify-content: center;
+	width: 1.8rem;
+}
+
+.dlh-pick-event__toggle::before {
+	content: "+";
+}
+
+.dlh-pick-event[open] .dlh-pick-event__toggle::before {
+	content: "−";
 }
 
 .dlh-pick-event__head h4 {
@@ -1509,13 +1639,59 @@
 		width: 100%;
 	}
 
+	.dlh-group-picks.dlh-section {
+		gap: 0.9rem;
+		margin-block: 1.25rem;
+	}
+
+	.dlh-group-picks > .dlh-section__head > .dlh-pill {
+		display: none;
+	}
+
+	.dlh-group-picks .dlh-season-tabs {
+		gap: 0.25rem;
+		padding: 0.35rem;
+	}
+
+	.dlh-group-picks .dlh-season-tab {
+		padding: 0.6rem 0.7rem;
+	}
+
 	.dlh-pick-summary,
 	.dlh-pick-event__entries {
 		grid-template-columns: 1fr;
 	}
 
 	.dlh-pick-summary {
+		gap: 0.6rem;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.dlh-pick-summary__card {
+		gap: 0.25rem;
+		min-height: 96px;
+		padding: 0.75rem;
+	}
+
+	.dlh-pick-summary__card strong {
+		font-size: 1.4rem;
+	}
+
+	.dlh-pick-summary__card small {
+		font-size: 0.72rem;
+	}
+
+	.dlh-group-picks .dlh-panel {
+		padding: 0.85rem;
+	}
+
+	.dlh-group-picks .dlh-table-wrap {
+		display: none;
+	}
+
+	.dlh-picks-mobile {
+		display: grid;
+		gap: 0.6rem;
 	}
 
 	.dlh-pick-entry:nth-child(odd),
@@ -1523,6 +1699,19 @@
 		border-left: 0;
 		padding-left: 0;
 		padding-right: 0;
+	}
+
+	.dlh-pick-event__head {
+		align-items: center;
+		gap: 0.65rem;
+	}
+
+	.dlh-pick-event__head h4 {
+		font-size: 1.05rem;
+	}
+
+	.dlh-pick-event__meta {
+		gap: 0.35rem;
 	}
 
 	.dlh-cup-hero,
@@ -1544,11 +1733,5 @@
 	.dlh-cup-trophy {
 		justify-content: start;
 		min-width: 0;
-	}
-}
-
-@media (max-width: 480px) {
-	.dlh-pick-summary {
-		grid-template-columns: 1fr;
 	}
 }
