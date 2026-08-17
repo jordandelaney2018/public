@@ -43,8 +43,8 @@ trait DLH_Group_Picks {
 	public function register_group_picks_admin_page() {
 		add_submenu_page(
 			'edit.php?post_type=dlh_manager',
-			__('Group Picks', 'draft-league-hub'),
-			__('Group Picks', 'draft-league-hub'),
+			__('Groupie Picks', 'draft-league-hub'),
+			__('Groupie Picks', 'draft-league-hub'),
 			'manage_options',
 			'dlh-group-picks',
 			array($this, 'render_group_picks_admin_page')
@@ -96,8 +96,8 @@ trait DLH_Group_Picks {
 		$recent_events = $this->get_group_pick_events(null, 50);
 		?>
 		<div class="wrap dlh-picks-admin">
-			<h1><?php echo esc_html__('Group Picks', 'draft-league-hub'); ?></h1>
-			<p><?php echo esc_html__('Record one group picks round at a time. Empty manager rows are ignored; clearing an existing pick removes that entry.', 'draft-league-hub'); ?></p>
+			<h1><?php echo esc_html__('Groupie Picks', 'draft-league-hub'); ?></h1>
+			<p><?php echo esc_html__('Record one Groupie Picks round at a time. Empty manager rows are ignored; clearing an existing pick removes that entry.', 'draft-league-hub'); ?></p>
 
 			<?php if (!empty($_GET['saved'])) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php echo esc_html__('The picks round was saved.', 'draft-league-hub'); ?></p></div>
@@ -190,7 +190,7 @@ trait DLH_Group_Picks {
 					</tbody>
 				</table>
 			<?php else : ?>
-				<p><?php echo esc_html__('No group picks rounds have been recorded yet.', 'draft-league-hub'); ?></p>
+				<p><?php echo esc_html__('No Groupie Picks rounds have been recorded yet.', 'draft-league-hub'); ?></p>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -201,7 +201,7 @@ trait DLH_Group_Picks {
 		global $wpdb;
 
 		if (!current_user_can('manage_options')) {
-			return new WP_Error('dlh_pick_permission_denied', __('You do not have permission to record group picks.', 'draft-league-hub'));
+			return new WP_Error('dlh_pick_permission_denied', __('You do not have permission to record Groupie Picks.', 'draft-league-hub'));
 		}
 
 		$event_id = absint($_POST['event_id'] ?? 0);
@@ -439,13 +439,13 @@ trait DLH_Group_Picks {
 			<div class="dlh-section__head">
 				<div>
 					<p class="dlh-kicker"><?php echo esc_html__('The group knows best. Allegedly.', 'draft-league-hub'); ?></p>
-					<h2><?php echo esc_html__('Group Picks', 'draft-league-hub'); ?></h2>
+					<h2><?php echo esc_html__('Groupie Picks', 'draft-league-hub'); ?></h2>
 					<p><?php echo esc_html__('Every call, every result, and the win percentage table that settles who actually knows ball.', 'draft-league-hub'); ?></p>
 				</div>
 				<span class="dlh-pill"><?php echo esc_html($all_time ? __('All time', 'draft-league-hub') : ($selected_season['label'] ?? __('Current season', 'draft-league-hub'))); ?></span>
 			</div>
 
-			<nav class="dlh-season-tabs" aria-label="<?php echo esc_attr__('Group Picks seasons', 'draft-league-hub'); ?>">
+			<nav class="dlh-season-tabs" aria-label="<?php echo esc_attr__('Groupie Picks seasons', 'draft-league-hub'); ?>">
 				<?php foreach ($seasons as $season) : ?>
 					<?php $is_active = !$all_time && absint($selected_season['id'] ?? 0) === absint($season['id']); ?>
 					<a class="dlh-season-tab<?php echo $is_active ? ' is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('pick_season', $season['slug'], $base_url)); ?>"<?php echo $is_active ? ' aria-current="page"' : ''; ?>><?php echo esc_html($season['label']); ?></a>
