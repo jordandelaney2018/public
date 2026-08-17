@@ -111,6 +111,26 @@ trait DLH_Admin {
 			}
 		}
 
+		if (isset($_POST['dlh_reset_current_season'])) {
+			check_admin_referer('dlh_reset_current_season');
+			$new_league_id = sanitize_text_field(wp_unslash($_POST['reset_season_league_id'] ?? ''));
+			$confirmation = sanitize_text_field(wp_unslash($_POST['reset_season_confirmation'] ?? ''));
+			$result = $this->reset_current_season($new_league_id, $confirmation);
+			if (is_wp_error($result)) {
+				echo '<div class="notice notice-error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-success"><p>' . esc_html(
+					sprintf(
+						__('Season %1$s was reset for FPL Draft league %2$s. Removed %3$d Groupie Picks rounds and %4$d Draft Cup draw. Managers and other CMS content were kept. You can now sync managers.', 'draft-league-hub'),
+						$result['season_label'],
+						$result['league_id'],
+						absint($result['pick_events']),
+						absint($result['cups'])
+					)
+				) . '</p></div>';
+			}
+		}
+
 		if (isset($_POST['dlh_save_settings'])) {
 			check_admin_referer('dlh_save_settings');
 
@@ -272,6 +292,26 @@ trait DLH_Admin {
 						</tr>
 					</table>
 					<p><button type="submit" name="dlh_rollover_season" class="button button-primary"><?php echo esc_html__('Archive current and start new season', 'draft-league-hub'); ?></button></p>
+				</form>
+
+				<h3><?php echo esc_html__('Reset current season data', 'draft-league-hub'); ?></h3>
+				<p><strong><?php echo esc_html__('Danger zone:', 'draft-league-hub'); ?></strong> <?php echo esc_html__('Use this only when the current season record has the correct label but contains the wrong league data. This permanently removes its saved Data Hub snapshot, Groupie Picks rounds, and Draft Cup draw. Managers, Hall of Fame entries, news, sidebets, and archived seasons are not removed.', 'draft-league-hub'); ?></p>
+				<form method="post" action="">
+					<?php wp_nonce_field('dlh_reset_current_season'); ?>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><label for="reset_season_league_id"><?php echo esc_html__('Replacement FPL Draft league ID', 'draft-league-hub'); ?></label></th>
+							<td><input name="reset_season_league_id" id="reset_season_league_id" type="text" class="regular-text" inputmode="numeric" required></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="reset_season_confirmation"><?php echo esc_html__('Confirmation', 'draft-league-hub'); ?></label></th>
+							<td>
+								<input name="reset_season_confirmation" id="reset_season_confirmation" type="text" class="regular-text" autocomplete="off" required>
+								<p class="description"><?php echo wp_kses_post(sprintf(__('Type %s exactly to confirm.', 'draft-league-hub'), '<code>' . esc_html('RESET ' . $current_season['label']) . '</code>')); ?></p>
+							</td>
+						</tr>
+					</table>
+					<p><button type="submit" name="dlh_reset_current_season" class="button button-secondary"><?php echo esc_html__('Reset current season permanently', 'draft-league-hub'); ?></button></p>
 				</form>
 			<?php endif; ?>
 

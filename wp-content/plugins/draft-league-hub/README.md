@@ -38,6 +38,12 @@ Before changing to a new league, go to Settings > Draft League Hub and use
 **Archive current and start new season**. The plugin captures the outgoing
 season first and cancels the rollover if the standings cannot be saved.
 
+If the current season has the correct label but was linked to the wrong FPL
+Draft league, use **Reset current season data** instead. The protected reset
+requires the replacement league ID and an exact confirmation phrase. It clears
+only that season's saved Data Hub snapshot, Groupie Picks rounds, Draft Cup,
+and FPL API cache. Managers and unrelated CMS content are retained.
+
 ## Shortcodes
 
 - `[dlh_home]` - front-page hero and latest news.

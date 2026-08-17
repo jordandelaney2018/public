@@ -499,6 +499,22 @@ trait DLH_Seasons {
 				);
 			}
 
+			if (!$manager_ids && $real_name) {
+				$name_matches = get_posts(
+					array(
+						'post_type' => 'dlh_manager',
+						'post_status' => 'any',
+						'posts_per_page' => 2,
+						'fields' => 'ids',
+						'meta_key' => 'dlh_real_name',
+						'meta_value' => $real_name,
+					)
+				);
+				if (1 === count($name_matches)) {
+					$manager_ids = $name_matches;
+				}
+			}
+
 			$manager_id = absint($manager_ids[0] ?? 0);
 			if (!$manager_id) {
 				$manager_id = wp_insert_post(
@@ -528,6 +544,107 @@ trait DLH_Seasons {
 			'created' => $created,
 			'updated' => $updated,
 			'total' => $created + $updated,
+		);
+	}
+
+
+	private function reset_current_season($new_league_id, $confirmation) {
+		global $wpdb;
+
+		if (!current_user_can('manage_options')) {
+			return new WP_Error('dlh_reset_permission_denied', __('You do not have permission to reset the current season.', 'draft-league-hub'));
+		}
+
+		$current = $this->get_current_season();
+		if (!$current) {
+			return new WP_Error('dlh_no_current_season', __('No current season is configured.', 'draft-league-hub'));
+		}
+
+		$new_league_id = $this->sanitize_league_id($new_league_id);
+		if (!$new_league_id) {
+			return new WP_Error('dlh_reset_league_required', __('Add the replacement FPL Draft league ID before resetting the season.', 'draft-league-hub'));
+		}
+
+		$expected_confirmation = 'RESET ' . $current['label'];
+		$confirmation = trim(sanitize_text_field((string) $confirmation));
+		if (!hash_equals($expected_confirmation, $confirmation)) {
+			return new WP_Error(
+				'dlh_reset_confirmation_failed',
+				sprintf(__('Confirmation did not match. Type %s exactly.', 'draft-league-hub'), $expected_confirmation)
+			);
+		}
+
+		$season_id = absint($current['id']);
+		$seasons_table = $this->seasons_table_name();
+		$events_table = $this->group_pick_events_table_name();
+		$entries_table = $this->group_pick_entries_table_name();
+		$cups_table = $this->draft_cups_table_name();
+		$ties_table = $this->draft_cup_ties_table_name();
+		$now = current_time('mysql', true);
+
+		if (false === $wpdb->query('START TRANSACTION')) {
+			return new WP_Error('dlh_reset_failed', __('The season reset could not start, so no season data was removed.', 'draft-league-hub'));
+		}
+
+		$pick_entries = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE entries FROM {$entries_table} entries INNER JOIN {$events_table} events ON events.id = entries.event_id WHERE events.season_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$season_id
+			)
+		);
+		$pick_events = false === $pick_entries ? false : $wpdb->delete($events_table, array('season_id' => $season_id), array('%d'));
+		$cup_ties = false === $pick_events ? false : $wpdb->query(
+			$wpdb->prepare(
+				"DELETE ties FROM {$ties_table} ties INNER JOIN {$cups_table} cups ON cups.id = ties.cup_id WHERE cups.season_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$season_id
+			)
+		);
+		$cups = false === $cup_ties ? false : $wpdb->delete($cups_table, array('season_id' => $season_id), array('%d'));
+		$season_updated = false === $cups ? false : $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$seasons_table}
+				SET league_id = %s, snapshot = NULL, snapshot_hash = '', snapshot_captured_at = NULL, updated_at = %s
+				WHERE id = %d AND status = 'current'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$new_league_id,
+				$now,
+				$season_id
+			)
+		);
+
+		if (false === $pick_entries || false === $pick_events || false === $cup_ties || false === $cups || false === $season_updated) {
+			$wpdb->query('ROLLBACK');
+			return new WP_Error('dlh_reset_failed', __('The season reset failed, so no season data was removed.', 'draft-league-hub'));
+		}
+
+		if (false === $wpdb->query('COMMIT')) {
+			$wpdb->query('ROLLBACK');
+			return new WP_Error('dlh_reset_failed', __('The season reset could not be committed, so no season data was removed.', 'draft-league-hub'));
+		}
+
+		$options = get_option(self::OPTION, array());
+		$options = is_array($options) ? $options : array();
+		$options['season_label'] = $current['label'];
+		$options['fpl_league_id'] = $new_league_id;
+		update_option(self::OPTION, $options);
+		$cache_paths = array('/api/bootstrap-static');
+		foreach (array_unique(array_filter(array($current['league_id'], $new_league_id))) as $league_id) {
+			$encoded_league_id = rawurlencode($league_id);
+			$cache_paths[] = '/api/league/' . $encoded_league_id . '/details';
+			$cache_paths[] = '/api/draft/league/' . $encoded_league_id . '/transactions';
+			$cache_paths[] = '/api/draft/league/' . $encoded_league_id . '/trades';
+			$cache_paths[] = '/api/draft/' . $encoded_league_id . '/choices';
+		}
+		$cleared_transients = $this->clear_api_cache($cache_paths);
+
+		return array(
+			'season_id' => $season_id,
+			'season_label' => $current['label'],
+			'league_id' => $new_league_id,
+			'pick_entries' => absint($pick_entries),
+			'pick_events' => absint($pick_events),
+			'cup_ties' => absint($cup_ties),
+			'cups' => absint($cups),
+			'cleared_transients' => absint($cleared_transients),
 		);
 	}
 
