@@ -59,12 +59,12 @@ trait DLH_Options {
 
 	public function maybe_upgrade_content() {
 		$content_version = get_option('dlh_content_version', '0.1.0');
-		if (version_compare($content_version, '0.4.0', '>=')) {
+		if (version_compare($content_version, '0.6.0', '>=')) {
 			return;
 		}
 
 		$this->create_default_pages();
-		update_option('dlh_content_version', '0.4.0');
+		update_option('dlh_content_version', '0.6.0');
 		flush_rewrite_rules(false);
 	}
 
