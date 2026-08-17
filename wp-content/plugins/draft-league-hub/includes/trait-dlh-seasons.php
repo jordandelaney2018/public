@@ -21,6 +21,8 @@ trait DLH_Seasons {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$table_name = $this->seasons_table_name();
+		$events_table = $this->group_pick_events_table_name();
+		$entries_table = $this->group_pick_entries_table_name();
 		$charset_collate = $wpdb->get_charset_collate();
 		$sql = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -39,8 +41,37 @@ trait DLH_Seasons {
 		) {$charset_collate};";
 
 		dbDelta($sql);
+		$events_sql = "CREATE TABLE {$events_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			season_id bigint(20) unsigned NOT NULL,
+			title varchar(190) NOT NULL,
+			event_date date NOT NULL,
+			gameweek tinyint(3) unsigned DEFAULT NULL,
+			notes text NULL,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY season_date (season_id, event_date),
+			KEY event_date (event_date)
+		) {$charset_collate};";
+		$entries_sql = "CREATE TABLE {$entries_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			event_id bigint(20) unsigned NOT NULL,
+			manager_id bigint(20) unsigned NOT NULL,
+			pick_text text NOT NULL,
+			result varchar(12) NOT NULL DEFAULT 'pending',
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY event_manager (event_id, manager_id),
+			KEY manager_result (manager_id, result),
+			KEY result (result)
+		) {$charset_collate};";
+
+		dbDelta($events_sql);
+		dbDelta($entries_sql);
 		$this->seasons_table_ready = null;
-		if ($this->seasons_table_exists()) {
+		if ($this->seasons_table_exists() && $this->group_pick_tables_exist()) {
 			update_option('dlh_schema_version', self::SCHEMA_VERSION);
 		}
 	}

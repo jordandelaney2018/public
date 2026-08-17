@@ -59,12 +59,12 @@ trait DLH_Options {
 
 	public function maybe_upgrade_content() {
 		$content_version = get_option('dlh_content_version', '0.1.0');
-		if (version_compare($content_version, '0.2.2', '>=')) {
+		if (version_compare($content_version, '0.3.0', '>=')) {
 			return;
 		}
 
 		$this->create_default_pages();
-		update_option('dlh_content_version', '0.2.2');
+		update_option('dlh_content_version', '0.3.0');
 		flush_rewrite_rules(false);
 	}
 
@@ -79,13 +79,14 @@ trait DLH_Options {
 			'hall_of_fame' => array('title' => 'Hall of Fame', 'slug' => 'hall-of-fame', 'shortcode' => '[dlh_hall_of_fame]'),
 			'calendar' => array('title' => 'Calendar', 'slug' => 'calendar', 'shortcode' => '[dlh_calendar]'),
 			'stats' => array('title' => 'Data Hub', 'slug' => 'league-stats', 'shortcode' => '[dlh_stats]'),
+			'group_picks' => array('title' => 'Group Picks', 'slug' => 'group-picks', 'shortcode' => '[dlh_group_picks]'),
 		);
 
 		foreach ($pages as $key => $page) {
 			$existing = get_page_by_path($page['slug']);
 			if ($existing) {
 				$options['page_ids'][$key] = $existing->ID;
-				if ('stats' === $key && get_post_meta($existing->ID, '_dlh_created_page', true) && $page['title'] !== $existing->post_title) {
+				if (in_array($key, array('stats', 'group_picks'), true) && get_post_meta($existing->ID, '_dlh_created_page', true) && $page['title'] !== $existing->post_title) {
 					wp_update_post(
 						array(
 							'ID' => $existing->ID,
@@ -126,6 +127,7 @@ trait DLH_Options {
 			'hall_of_fame' => __('Hall of Fame', 'draft-league-hub'),
 			'calendar' => __('Calendar', 'draft-league-hub'),
 			'stats' => __('Data Hub', 'draft-league-hub'),
+			'group_picks' => __('Group Picks', 'draft-league-hub'),
 		);
 		$links = array();
 

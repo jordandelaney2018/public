@@ -19,3 +19,48 @@
 .dlh-hof-media-preview p {
 	margin: 8px 0 0;
 }
+
+.dlh-picks-admin__form {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-sizing: border-box;
+	margin: 20px 0 28px;
+	max-width: 1180px;
+	padding: 20px;
+}
+
+.dlh-picks-admin__form h2:first-child {
+	margin-top: 0;
+}
+
+.dlh-picks-admin__table-wrap {
+	overflow-x: auto;
+}
+
+.dlh-picks-admin__table {
+	min-width: 760px;
+}
+
+.dlh-picks-admin__table th:first-child {
+	width: 220px;
+}
+
+.dlh-picks-admin__table th:last-child {
+	width: 130px;
+}
+
+.dlh-picks-admin__table tbody th small {
+	color: #646970;
+	display: block;
+	font-weight: 400;
+	margin-top: 2px;
+}
+
+.dlh-picks-admin__table input,
+.dlh-picks-admin__table select {
+	width: 100%;
+}
+
+.dlh-picks-admin__recent {
+	max-width: 1180px;
+}

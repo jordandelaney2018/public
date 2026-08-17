@@ -17,6 +17,16 @@ trait DLH_Assets {
 
 
 	public function enqueue_admin_assets($hook) {
+		if ('dlh_manager_page_dlh-group-picks' === $hook) {
+			wp_enqueue_style(
+				'dlh-admin-styles',
+				DLH_PLUGIN_URL . 'assets/admin.css',
+				array(),
+				self::VERSION
+			);
+			return;
+		}
+
 		if (!in_array($hook, array('post.php', 'post-new.php'), true)) {
 			return;
 		}

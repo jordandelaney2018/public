@@ -19,7 +19,7 @@ trait DLH_Shortcodes {
 					<p><?php echo esc_html($options['hero_copy']); ?></p>
 					<div class="dlh-actions">
 						<?php foreach ($pages as $key => $page) : ?>
-							<?php if (in_array($key, array('votes', 'sidebets', 'hall_of_fame', 'calendar', 'stats'), true)) : ?>
+							<?php if (in_array($key, array('votes', 'sidebets', 'hall_of_fame', 'calendar', 'stats', 'group_picks'), true)) : ?>
 								<a class="dlh-button" href="<?php echo esc_url($page['url']); ?>"><?php echo esc_html($page['label']); ?></a>
 							<?php endif; ?>
 						<?php endforeach; ?>

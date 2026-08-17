@@ -14,6 +14,8 @@ trait DLH_Admin {
 			'draft-league-hub',
 			array($this, 'render_settings_page')
 		);
+
+		$this->register_group_picks_admin_page();
 	}
 
 
@@ -278,6 +280,7 @@ trait DLH_Admin {
 				<li><code>[dlh_hall_of_fame]</code> <?php echo esc_html__('Funny pictures, videos, and receipts', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_calendar]</code> <?php echo esc_html__('Upcoming draft dates', 'draft-league-hub'); ?></li>
 				<li><code>[dlh_stats]</code> <?php echo esc_html__('Seasonal Data Hub with standings, stats, and the saved draft recap', 'draft-league-hub'); ?></li>
+				<li><code>[dlh_group_picks]</code> <?php echo esc_html__('Group picks win-percentage leaderboard and history', 'draft-league-hub'); ?></li>
 			</ul>
 		</div>
 		<?php
