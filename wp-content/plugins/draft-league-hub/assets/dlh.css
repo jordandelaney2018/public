@@ -479,6 +479,101 @@
 	padding: 1rem;
 }
 
+.dlh-hof-tabs {
+	background: var(--dlh-soft);
+	border: 1px solid var(--dlh-line);
+	border-radius: 8px;
+	display: inline-flex;
+	gap: 0.35rem;
+	justify-self: start;
+	padding: 0.35rem;
+}
+
+.dlh-hof-tab {
+	border-radius: 6px;
+	color: var(--dlh-ink);
+	font-size: 0.9rem;
+	font-weight: 900;
+	padding: 0.65rem 1rem;
+	text-decoration: none;
+}
+
+.dlh-hof-tab:hover,
+.dlh-hof-tab:focus-visible,
+.dlh-hof-tab.is-active {
+	background: var(--dlh-navy);
+	color: #ffffff;
+}
+
+.dlh-winner-grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.dlh-winner-card {
+	background: var(--dlh-paper);
+	border: 1px solid var(--dlh-line);
+	border-radius: 8px;
+	box-shadow: 0 14px 30px rgba(6, 20, 33, 0.08);
+	display: grid;
+	overflow: hidden;
+}
+
+.dlh-winner-card__photo {
+	background:
+		linear-gradient(145deg, rgba(216, 169, 40, 0.16), transparent 45%),
+		var(--dlh-soft);
+	position: relative;
+}
+
+.dlh-winner-card__photo img,
+.dlh-winner-card__placeholder {
+	aspect-ratio: 4 / 5;
+	display: block;
+	height: auto;
+	object-fit: cover;
+	object-position: center top;
+	width: 100%;
+}
+
+.dlh-winner-card__placeholder {
+	align-items: center;
+	color: var(--dlh-muted);
+	display: flex;
+	font-weight: 900;
+	justify-content: center;
+	padding: 1rem;
+}
+
+.dlh-winner-card__year {
+	background: var(--dlh-gold-bright);
+	border: 1px solid var(--dlh-navy);
+	border-radius: 999px;
+	bottom: 0.8rem;
+	color: var(--dlh-navy);
+	font-size: 0.82rem;
+	font-weight: 900;
+	left: 0.8rem;
+	padding: 0.42rem 0.7rem;
+	position: absolute;
+}
+
+.dlh-winner-card__body {
+	display: grid;
+	gap: 0.35rem;
+	padding: 1rem;
+}
+
+.dlh-winner-card__body h3,
+.dlh-winner-card__body p {
+	margin: 0;
+}
+
+.dlh-winner-card__body h3 {
+	font-size: 1.35rem;
+}
+
 .dlh-stack {
 	display: grid;
 	gap: 1rem;

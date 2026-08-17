@@ -8,6 +8,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - League News custom post type for joke stories and matchday slander.
 - Auto-generated monthly vote page.
 - Sidebets page with front-end submissions.
+- Hall of Fame gallery with a CMS-managed Past Winners tab.
 - Calendar page for upcoming draft dates, deadlines, and league events.
 - Cached FPL Draft API standings widget.
 - Season records and locally stored FPL Draft snapshots for safe annual rollover.
@@ -43,6 +44,7 @@ season first and cancels the rollover if the standings cannot be saved.
 - `[dlh_news]` - league news listing.
 - `[dlh_monthly_votes]` - current monthly vote.
 - `[dlh_sidebets]` - sidebet board and submission form.
+- `[dlh_hall_of_fame]` - gallery and Past Winners tabs.
 - `[dlh_calendar]` - upcoming draft dates.
 - `[dlh_stats]` - seasonal Data Hub, FPL Draft standings, and saved draft recap.
 - `[dlh_group_picks]` - Groupie Picks leaderboard and round history.

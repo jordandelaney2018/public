@@ -49,6 +49,15 @@ trait DLH_Admin {
 		);
 
 		add_meta_box(
+			'dlh_past_winner_details',
+			__('Winner Details', 'draft-league-hub'),
+			array($this, 'render_past_winner_meta_box'),
+			'dlh_past_winner',
+			'normal',
+			'high'
+		);
+
+		add_meta_box(
 			'dlh_calendar_event_details',
 			__('Draft Date Details', 'draft-league-hub'),
 			array($this, 'render_calendar_event_meta_box'),
@@ -383,6 +392,18 @@ trait DLH_Admin {
 	}
 
 
+	public function render_past_winner_meta_box($post) {
+		wp_nonce_field('dlh_save_past_winner_meta', 'dlh_past_winner_nonce');
+		$year = get_post_meta($post->ID, 'dlh_winner_year', true);
+
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr><th scope="row"><label for="dlh_winner_year">' . esc_html__('Season / year won', 'draft-league-hub') . '</label></th><td>';
+		echo '<input type="text" class="regular-text" id="dlh_winner_year" name="dlh_winner_year" value="' . esc_attr($year) . '" maxlength="20" placeholder="' . esc_attr__('2025/26', 'draft-league-hub') . '" required>';
+		echo '<p class="description">' . esc_html__('Use the post title for the winner’s name and set their photo in the Featured image panel.', 'draft-league-hub') . '</p>';
+		echo '</td></tr></table>';
+	}
+
+
 	public function render_calendar_event_meta_box($post) {
 		wp_nonce_field('dlh_save_calendar_event_meta', 'dlh_calendar_event_nonce');
 
@@ -446,6 +467,37 @@ trait DLH_Admin {
 		update_post_meta($post_id, 'dlh_media_type', $media_type);
 		update_post_meta($post_id, 'dlh_media_attachment_id', absint($_POST['dlh_media_attachment_id'] ?? 0));
 		update_post_meta($post_id, 'dlh_media_url', esc_url_raw(wp_unslash($_POST['dlh_media_url'] ?? '')));
+	}
+
+
+	public function save_past_winner_meta($post_id) {
+		if (!$this->can_save_post($post_id, 'dlh_past_winner_nonce', 'dlh_save_past_winner_meta')) {
+			return;
+		}
+
+		$year = substr(sanitize_text_field(wp_unslash($_POST['dlh_winner_year'] ?? '')), 0, 20);
+		$sort_year = preg_match('/\d{4}/', $year, $matches) ? absint($matches[0]) : 0;
+		update_post_meta($post_id, 'dlh_winner_year', $year);
+		update_post_meta($post_id, 'dlh_winner_sort_year', $sort_year);
+	}
+
+
+	public function past_winner_admin_columns($columns) {
+		$new_columns = array();
+		foreach ($columns as $key => $label) {
+			$new_columns[$key] = $label;
+			if ('title' === $key) {
+				$new_columns['dlh_winner_year'] = __('Season / year', 'draft-league-hub');
+			}
+		}
+		return $new_columns;
+	}
+
+
+	public function render_past_winner_admin_column($column, $post_id) {
+		if ('dlh_winner_year' === $column) {
+			echo esc_html(get_post_meta($post_id, 'dlh_winner_year', true) ?: '—');
+		}
 	}
 
 

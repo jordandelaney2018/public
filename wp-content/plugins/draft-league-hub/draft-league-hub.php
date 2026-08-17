@@ -72,7 +72,10 @@ final class DLH_Plugin {
 		add_action('save_post_dlh_manager', array($this, 'save_manager_meta'));
 		add_action('save_post_dlh_sidebet', array($this, 'save_sidebet_meta'));
 		add_action('save_post_dlh_hof_entry', array($this, 'save_hall_of_fame_meta'));
+		add_action('save_post_dlh_past_winner', array($this, 'save_past_winner_meta'));
 		add_action('save_post_dlh_calendar_event', array($this, 'save_calendar_event_meta'));
+		add_filter('manage_dlh_past_winner_posts_columns', array($this, 'past_winner_admin_columns'));
+		add_action('manage_dlh_past_winner_posts_custom_column', array($this, 'render_past_winner_admin_column'), 10, 2);
 		add_action(self::CRON_HOOK, array($this, 'daily_maintenance'));
 
 		add_shortcode('dlh_home', array($this, 'shortcode_home'));

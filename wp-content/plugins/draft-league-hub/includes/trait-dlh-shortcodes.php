@@ -190,8 +190,17 @@ trait DLH_Shortcodes {
 
 	public function shortcode_hall_of_fame($atts = array()) {
 		$atts = shortcode_atts(array('count' => 24), $atts, 'dlh_hall_of_fame');
+		$requested_tab = isset($_GET['hof_tab']) && is_string($_GET['hof_tab']) ? sanitize_key(wp_unslash($_GET['hof_tab'])) : '';
+		$active_tab = 'past-winners' === $requested_tab ? 'past-winners' : 'gallery';
+		$is_winners = 'past-winners' === $active_tab;
 		$query = new WP_Query(
-			array(
+			$is_winners ? array(
+				'post_type' => 'dlh_past_winner',
+				'post_status' => 'publish',
+				'posts_per_page' => 100,
+				'meta_key' => 'dlh_winner_sort_year',
+				'orderby' => array('meta_value_num' => 'DESC', 'menu_order' => 'ASC', 'date' => 'DESC'),
+			) : array(
 				'post_type' => 'dlh_hof_entry',
 				'post_status' => 'publish',
 				'posts_per_page' => max(1, absint($atts['count'])),
@@ -199,6 +208,7 @@ trait DLH_Shortcodes {
 				'order' => 'DESC',
 			)
 		);
+		$base_url = get_permalink() ?: home_url('/');
 
 		ob_start();
 		?>
@@ -206,20 +216,25 @@ trait DLH_Shortcodes {
 			<div class="dlh-section__head">
 				<div>
 					<h2><?php echo esc_html__('Hall of Fame', 'draft-league-hub'); ?></h2>
-					<p><?php echo esc_html__('The worst things ever maybe', 'draft-league-hub'); ?></p>
+					<p><?php echo esc_html($is_winners ? __('The champions, preserved for posterity.', 'draft-league-hub') : __('The worst things ever maybe', 'draft-league-hub')); ?></p>
 				</div>
-				<span class="dlh-pill"><?php echo esc_html(sprintf(_n('%d entry', '%d entries', $query->found_posts, 'draft-league-hub'), $query->found_posts)); ?></span>
+				<span class="dlh-pill"><?php echo esc_html($is_winners ? sprintf(_n('%d winner', '%d winners', $query->found_posts, 'draft-league-hub'), $query->found_posts) : sprintf(_n('%d entry', '%d entries', $query->found_posts, 'draft-league-hub'), $query->found_posts)); ?></span>
 			</div>
 
-			<div class="dlh-hof-grid">
+			<nav class="dlh-hof-tabs" aria-label="<?php echo esc_attr__('Hall of Fame sections', 'draft-league-hub'); ?>">
+				<a class="dlh-hof-tab<?php echo $is_winners ? '' : ' is-active'; ?>" href="<?php echo esc_url(remove_query_arg('hof_tab', $base_url)); ?>"<?php echo $is_winners ? '' : ' aria-current="page"'; ?>><?php echo esc_html__('Gallery', 'draft-league-hub'); ?></a>
+				<a class="dlh-hof-tab<?php echo $is_winners ? ' is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('hof_tab', 'past-winners', $base_url)); ?>"<?php echo $is_winners ? ' aria-current="page"' : ''; ?>><?php echo esc_html__('Past Winners', 'draft-league-hub'); ?></a>
+			</nav>
+
+			<div class="<?php echo esc_attr($is_winners ? 'dlh-winner-grid' : 'dlh-hof-grid'); ?>">
 				<?php if ($query->have_posts()) : ?>
 					<?php while ($query->have_posts()) : ?>
 						<?php $query->the_post(); ?>
-						<?php echo $this->render_hall_of_fame_card(get_the_ID()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo $is_winners ? $this->render_past_winner_card(get_the_ID()) : $this->render_hall_of_fame_card(get_the_ID()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<?php endwhile; ?>
 					<?php wp_reset_postdata(); ?>
 				<?php else : ?>
-					<div class="dlh-empty"><?php echo esc_html__('No Hall of Fame entries yet. The evidence locker is empty.', 'draft-league-hub'); ?></div>
+					<div class="dlh-empty"><?php echo esc_html($is_winners ? __('No past winners have been added yet. Add the first champion under Hall of Fame > Past Winners.', 'draft-league-hub') : __('No Hall of Fame entries yet. The evidence locker is empty.', 'draft-league-hub')); ?></div>
 				<?php endif; ?>
 			</div>
 		</div>

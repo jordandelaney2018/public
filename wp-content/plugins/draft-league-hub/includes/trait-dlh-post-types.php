@@ -80,6 +80,25 @@ trait DLH_Post_Types {
 		);
 
 		register_post_type(
+			'dlh_past_winner',
+			array(
+				'labels' => array(
+					'name' => __('Past Winners', 'draft-league-hub'),
+					'singular_name' => __('Past Winner', 'draft-league-hub'),
+					'add_new_item' => __('Add Past Winner', 'draft-league-hub'),
+					'edit_item' => __('Edit Past Winner', 'draft-league-hub'),
+					'new_item' => __('New Past Winner', 'draft-league-hub'),
+					'view_items' => __('View Past Winners', 'draft-league-hub'),
+				),
+				'public' => false,
+				'show_ui' => true,
+				'show_in_rest' => true,
+				'show_in_menu' => 'edit.php?post_type=dlh_hof_entry',
+				'supports' => array('title', 'thumbnail', 'page-attributes'),
+			)
+		);
+
+		register_post_type(
 			'dlh_vote_month',
 			array(
 				'labels' => array(

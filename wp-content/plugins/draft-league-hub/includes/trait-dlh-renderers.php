@@ -184,6 +184,29 @@ trait DLH_Renderers {
 	}
 
 
+	private function render_past_winner_card($post_id) {
+		$year = get_post_meta($post_id, 'dlh_winner_year', true);
+		$name = get_the_title($post_id);
+
+		ob_start();
+		echo '<article class="dlh-winner-card">';
+		echo '<div class="dlh-winner-card__photo">';
+		if (has_post_thumbnail($post_id)) {
+			echo get_the_post_thumbnail($post_id, 'large', array('alt' => $name, 'loading' => 'lazy')); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		} else {
+			echo '<div class="dlh-winner-card__placeholder">' . esc_html__('Photo to follow', 'draft-league-hub') . '</div>';
+		}
+		if ($year) {
+			echo '<span class="dlh-winner-card__year">' . esc_html($year) . '</span>';
+		}
+		echo '</div>';
+		echo '<div class="dlh-winner-card__body"><p class="dlh-kicker">' . esc_html__('League champion', 'draft-league-hub') . '</p><h3>' . esc_html($name) . '</h3></div>';
+		echo '</article>';
+
+		return ob_get_clean();
+	}
+
+
 	private function render_calendar_event($post_id) {
 		$event_date = get_post_meta($post_id, 'dlh_event_date', true);
 		$event_time = get_post_meta($post_id, 'dlh_event_time', true);
