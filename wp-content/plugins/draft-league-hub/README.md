@@ -10,6 +10,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - Sidebets page with front-end submissions.
 - Calendar page for upcoming draft dates, deadlines, and league events.
 - Cached FPL Draft API standings widget.
+- Season records and locally stored FPL Draft snapshots for safe annual rollover.
 
 ## Install
 
@@ -20,6 +21,16 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 5. Save your league name and create the starter pages.
 6. Add managers under Managers.
 7. Add the generated pages to your WordPress menu.
+
+## Season Rollover
+
+The plugin creates a current season record from the existing season label and
+FPL Draft league ID. Viewing the stats page saves successful API responses to
+that season automatically.
+
+Before changing to a new league, go to Settings > Draft League Hub and use
+**Archive current and start new season**. The plugin captures the outgoing
+season first and cancels the rollover if the standings cannot be saved.
 
 ## Shortcodes
 

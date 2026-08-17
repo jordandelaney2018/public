@@ -39,7 +39,14 @@ trait DLH_Options {
 			$options = array();
 		}
 
-		return array_merge($this->defaults(), $options);
+		$options = array_merge($this->defaults(), $options);
+		$current_season = $this->get_current_season();
+		if ($current_season) {
+			$options['season_label'] = $current_season['label'];
+			$options['fpl_league_id'] = $current_season['league_id'];
+		}
+
+		return $options;
 	}
 
 

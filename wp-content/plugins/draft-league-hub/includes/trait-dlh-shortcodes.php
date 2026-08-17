@@ -297,11 +297,26 @@ trait DLH_Shortcodes {
 					$transactions = $this->api_get('/api/draft/league/' . rawurlencode($league_id) . '/transactions');
 					$trades = $this->api_get('/api/draft/league/' . rawurlencode($league_id) . '/trades');
 					$bootstrap = $this->api_get('/api/bootstrap-static');
+					$warnings = array();
+					if (is_wp_error($transactions)) {
+						$warnings[] = $transactions->get_error_message();
+					}
+					if (is_wp_error($trades)) {
+						$warnings[] = $trades->get_error_message();
+					}
+					if (is_wp_error($bootstrap)) {
+						$warnings[] = $bootstrap->get_error_message();
+					}
+
+					$transaction_data = is_wp_error($transactions) ? array() : $transactions;
+					$trade_data = is_wp_error($trades) ? array() : $trades;
+					$bootstrap_data = is_wp_error($bootstrap) ? array() : $bootstrap;
+					$this->record_current_season_snapshot($details, $transaction_data, $trade_data, $bootstrap_data, $warnings);
 					echo $this->render_standings(
 						$details,
-						is_wp_error($transactions) ? array() : $transactions,
-						is_wp_error($trades) ? array() : $trades,
-						is_wp_error($bootstrap) ? array() : $bootstrap
+						$transaction_data,
+						$trade_data,
+						$bootstrap_data
 					); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				}
 				?>

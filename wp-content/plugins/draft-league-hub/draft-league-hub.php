@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Draft League Hub
  * Description: A small WordPress hub for FPL Draft leagues: joke news, monthly votes, sidebets, availability polls, and FPL Draft API widgets.
- * Version: 0.1.8
+ * Version: 0.2.0
  * Author: Codex
  * Text Domain: draft-league-hub
  */
@@ -21,6 +21,7 @@ require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-admin.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-form-handlers.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-shortcodes.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-options.php';
+require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-seasons.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-votes.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-renderers.php';
 require_once DLH_PLUGIN_DIR . 'includes/trait-dlh-api.php';
@@ -33,16 +34,19 @@ final class DLH_Plugin {
 	use DLH_Form_Handlers;
 	use DLH_Shortcodes;
 	use DLH_Options;
+	use DLH_Seasons;
 	use DLH_Votes;
 	use DLH_Renderers;
 	use DLH_Api;
 	use DLH_Helpers;
 
-	const VERSION = '0.1.8';
+	const VERSION = '0.2.0';
+	const SCHEMA_VERSION = '1.0.0';
 	const OPTION = 'dlh_options';
 	const CRON_HOOK = 'dlh_daily_maintenance';
 
 	private static $instance = null;
+	private $seasons_table_ready = null;
 
 	public static function instance() {
 		if (null === self::$instance) {
@@ -53,6 +57,7 @@ final class DLH_Plugin {
 	}
 
 	private function __construct() {
+		add_action('init', array($this, 'maybe_upgrade_schema'), 5);
 		add_action('init', array($this, 'register_post_types'));
 		add_action('init', array($this, 'maybe_upgrade_content'), 30);
 		add_action('init', array($this, 'maybe_handle_frontend_posts'), 20);
@@ -77,6 +82,8 @@ final class DLH_Plugin {
 
 	public static function activate() {
 		$plugin = self::instance();
+		$plugin->install_schema();
+		$plugin->maybe_migrate_legacy_season();
 		$plugin->register_post_types();
 		$plugin->create_default_pages();
 		$plugin->schedule_cron();

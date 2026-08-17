@@ -61,6 +61,28 @@ trait DLH_Admin {
 			return;
 		}
 
+		if (isset($_POST['dlh_capture_season'])) {
+			check_admin_referer('dlh_capture_season');
+			$result = $this->capture_current_season_snapshot();
+			if (is_wp_error($result)) {
+				echo '<div class="notice notice-error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-success"><p>' . esc_html__('Current season data captured successfully.', 'draft-league-hub') . '</p></div>';
+			}
+		}
+
+		if (isset($_POST['dlh_rollover_season'])) {
+			check_admin_referer('dlh_rollover_season');
+			$new_label = sanitize_text_field(wp_unslash($_POST['new_season_label'] ?? ''));
+			$new_league_id = sanitize_text_field(wp_unslash($_POST['new_season_league_id'] ?? ''));
+			$result = $this->rollover_current_season($new_label, $new_league_id);
+			if (is_wp_error($result)) {
+				echo '<div class="notice notice-error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-success"><p>' . esc_html__('The outgoing season was archived and the new current season was created.', 'draft-league-hub') . '</p></div>';
+			}
+		}
+
 		if (isset($_POST['dlh_save_settings'])) {
 			check_admin_referer('dlh_save_settings');
 
@@ -70,13 +92,18 @@ trait DLH_Admin {
 			$options['hero_kicker'] = sanitize_text_field(wp_unslash($_POST['hero_kicker'] ?? ''));
 			$options['hero_title'] = sanitize_text_field(wp_unslash($_POST['hero_title'] ?? ''));
 			$options['hero_copy'] = sanitize_textarea_field(wp_unslash($_POST['hero_copy'] ?? ''));
-			$options['fpl_league_id'] = preg_replace('/[^0-9]/', '', wp_unslash($_POST['fpl_league_id'] ?? ''));
+			$options['fpl_league_id'] = $this->sanitize_league_id(wp_unslash($_POST['fpl_league_id'] ?? ''));
 			$options['cache_minutes'] = max(5, absint($_POST['cache_minutes'] ?? 30));
 			$options['default_questions'] = sanitize_textarea_field(wp_unslash($_POST['default_questions'] ?? ''));
 			$options['sidebets_require_login'] = !empty($_POST['sidebets_require_login']) ? 1 : 0;
 
-			update_option(self::OPTION, $options);
-			echo '<div class="updated notice"><p>' . esc_html__('Draft League Hub settings saved.', 'draft-league-hub') . '</p></div>';
+			$season_result = $this->sync_current_season_from_options($options);
+			if (is_wp_error($season_result)) {
+				echo '<div class="notice notice-error"><p>' . esc_html($season_result->get_error_message()) . '</p></div>';
+			} else {
+				update_option(self::OPTION, $options);
+				echo '<div class="updated notice"><p>' . esc_html__('Draft League Hub settings saved.', 'draft-league-hub') . '</p></div>';
+			}
 		}
 
 		if (isset($_POST['dlh_create_pages'])) {
@@ -86,6 +113,9 @@ trait DLH_Admin {
 		}
 
 		$options = $this->get_options();
+		$current_season = $this->get_current_season();
+		$seasons = $this->get_seasons();
+		$season_identity_locked = $current_season && !empty($current_season['snapshot_captured_at']);
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__('Draft League Hub', 'draft-league-hub'); ?></h1>
@@ -100,7 +130,10 @@ trait DLH_Admin {
 					</tr>
 					<tr>
 						<th scope="row"><label for="season_label"><?php echo esc_html__('Season label', 'draft-league-hub'); ?></label></th>
-						<td><input name="season_label" id="season_label" type="text" class="regular-text" value="<?php echo esc_attr($options['season_label']); ?>"></td>
+						<td>
+							<input name="season_label" id="season_label" type="text" class="regular-text" value="<?php echo esc_attr($options['season_label']); ?>"<?php echo $season_identity_locked ? ' readonly' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+							<p class="description"><?php echo esc_html($season_identity_locked ? __('This is locked because saved season data exists. Use the rollover form below to start a new season.', 'draft-league-hub') : __('Use a label such as 2025/26. It becomes locked after the first successful data capture.', 'draft-league-hub')); ?></p>
+						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="hero_kicker"><?php echo esc_html__('Hero eyebrow', 'draft-league-hub'); ?></label></th>
@@ -117,8 +150,8 @@ trait DLH_Admin {
 					<tr>
 						<th scope="row"><label for="fpl_league_id"><?php echo esc_html__('FPL Draft league ID', 'draft-league-hub'); ?></label></th>
 						<td>
-							<input name="fpl_league_id" id="fpl_league_id" type="text" class="regular-text" value="<?php echo esc_attr($options['fpl_league_id']); ?>">
-							<p class="description"><?php echo esc_html__('Used for cached calls to draft.premierleague.com. Leave blank until you want live stats.', 'draft-league-hub'); ?></p>
+							<input name="fpl_league_id" id="fpl_league_id" type="text" class="regular-text" value="<?php echo esc_attr($options['fpl_league_id']); ?>"<?php echo $season_identity_locked ? ' readonly' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+							<p class="description"><?php echo esc_html($season_identity_locked ? __('This league ID belongs to the saved current season and can only change through rollover.', 'draft-league-hub') : __('Used for cached calls to draft.premierleague.com. Leave blank until you want live stats.', 'draft-league-hub')); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -142,6 +175,70 @@ trait DLH_Admin {
 				</table>
 				<p><button type="submit" name="dlh_save_settings" class="button button-primary"><?php echo esc_html__('Save settings', 'draft-league-hub'); ?></button></p>
 			</form>
+
+			<hr>
+			<h2><?php echo esc_html__('Seasons', 'draft-league-hub'); ?></h2>
+			<p><?php echo esc_html__('The current season uses live FPL Draft data. Captured seasons are stored locally so a future league ID change cannot erase their history.', 'draft-league-hub'); ?></p>
+
+			<?php if ($seasons) : ?>
+				<table class="widefat striped" role="presentation">
+					<thead>
+						<tr>
+							<th><?php echo esc_html__('Season', 'draft-league-hub'); ?></th>
+							<th><?php echo esc_html__('Status', 'draft-league-hub'); ?></th>
+							<th><?php echo esc_html__('League ID', 'draft-league-hub'); ?></th>
+							<th><?php echo esc_html__('Last captured', 'draft-league-hub'); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ($seasons as $season) : ?>
+							<tr>
+								<td><strong><?php echo esc_html($season['label']); ?></strong></td>
+								<td><?php echo esc_html('current' === $season['status'] ? __('Current', 'draft-league-hub') : __('Archived', 'draft-league-hub')); ?></td>
+								<td><?php echo esc_html($season['league_id'] ? $season['league_id'] : __('Not set', 'draft-league-hub')); ?></td>
+								<td>
+									<?php
+									if ($season['snapshot_captured_at']) {
+										echo esc_html(get_date_from_gmt($season['snapshot_captured_at'], get_option('date_format') . ' ' . get_option('time_format')));
+									} else {
+										echo esc_html__('Not captured yet', 'draft-league-hub');
+									}
+									?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<?php if ($current_season) : ?>
+				<h3><?php echo esc_html__('Capture current season', 'draft-league-hub'); ?></h3>
+				<p><?php echo esc_html__('This saves the current standings, transfers, trades, and player data without changing which season is active.', 'draft-league-hub'); ?></p>
+				<form method="post" action="">
+					<?php wp_nonce_field('dlh_capture_season'); ?>
+					<p><button type="submit" name="dlh_capture_season" class="button"><?php echo esc_html__('Capture current season now', 'draft-league-hub'); ?></button></p>
+				</form>
+
+				<h3><?php echo esc_html__('Archive and start a new season', 'draft-league-hub'); ?></h3>
+				<p><?php echo esc_html__('The outgoing season is captured first. If that capture fails, rollover stops and the current settings remain untouched.', 'draft-league-hub'); ?></p>
+				<form method="post" action="">
+					<?php wp_nonce_field('dlh_rollover_season'); ?>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><label for="new_season_label"><?php echo esc_html__('New season label', 'draft-league-hub'); ?></label></th>
+							<td><input name="new_season_label" id="new_season_label" type="text" class="regular-text" value="<?php echo esc_attr($this->suggested_next_season_label($current_season['label'])); ?>" placeholder="2026/27" required></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="new_season_league_id"><?php echo esc_html__('New FPL Draft league ID', 'draft-league-hub'); ?></label></th>
+							<td>
+								<input name="new_season_league_id" id="new_season_league_id" type="text" class="regular-text" inputmode="numeric">
+								<p class="description"><?php echo esc_html__('Optional. You can add it later before the new season standings go live.', 'draft-league-hub'); ?></p>
+							</td>
+						</tr>
+					</table>
+					<p><button type="submit" name="dlh_rollover_season" class="button button-primary"><?php echo esc_html__('Archive current and start new season', 'draft-league-hub'); ?></button></p>
+				</form>
+			<?php endif; ?>
 
 			<hr>
 			<h2><?php echo esc_html__('Pages and Shortcodes', 'draft-league-hub'); ?></h2>
