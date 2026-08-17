@@ -249,7 +249,7 @@ trait DLH_Seasons {
 	}
 
 
-	private function record_current_season_snapshot($details, $transactions = array(), $trades = array(), $bootstrap = array(), $warnings = array()) {
+	private function record_current_season_snapshot($details, $transactions = array(), $trades = array(), $bootstrap = array(), $draft = array(), $warnings = array()) {
 		global $wpdb;
 
 		$current = $this->get_current_season();
@@ -268,6 +268,7 @@ trait DLH_Seasons {
 			'transactions' => is_array($transactions) ? $transactions : array(),
 			'trades' => is_array($trades) ? $trades : array(),
 			'bootstrap' => is_array($bootstrap) ? $bootstrap : array(),
+			'draft' => is_array($draft) ? $draft : array(),
 			'warnings' => array_values(array_filter(array_map('sanitize_text_field', (array) $warnings))),
 		);
 		$content_encoded = wp_json_encode($snapshot_content);
@@ -340,7 +341,97 @@ trait DLH_Seasons {
 			$bootstrap = array();
 		}
 
-		return $this->record_current_season_snapshot($details, $transactions, $trades, $bootstrap, $warnings);
+		$draft = $this->api_get('/api/draft/' . $league_id . '/choices');
+		if (is_wp_error($draft)) {
+			$warnings[] = $draft->get_error_message();
+			$draft = array();
+		}
+
+		return $this->record_current_season_snapshot($details, $transactions, $trades, $bootstrap, $draft, $warnings);
+	}
+
+
+	private function sync_current_season_managers() {
+		$current = $this->get_current_season();
+		if (!$current || empty($current['league_id'])) {
+			return new WP_Error('dlh_season_league_required', __('Add the current season FPL Draft league ID before syncing managers.', 'draft-league-hub'));
+		}
+
+		$details = $this->api_get('/api/league/' . rawurlencode($current['league_id']) . '/details');
+		if (is_wp_error($details)) {
+			return $details;
+		}
+
+		$entries = $details['league_entries'] ?? array();
+		if (!$entries || !is_array($entries)) {
+			return new WP_Error('dlh_no_league_entries', __('No managers were returned for the current league.', 'draft-league-hub'));
+		}
+
+		$created = 0;
+		$updated = 0;
+		foreach ($entries as $entry) {
+			$entry_id = absint($entry['entry_id'] ?? 0);
+			$league_entry_id = absint($entry['id'] ?? 0);
+			$team_name = sanitize_text_field($entry['entry_name'] ?? '');
+			$real_name = sanitize_text_field(trim(($entry['player_first_name'] ?? '') . ' ' . ($entry['player_last_name'] ?? '')));
+			if (!$entry_id || !$team_name) {
+				continue;
+			}
+
+			$manager_ids = get_posts(
+				array(
+					'post_type' => 'dlh_manager',
+					'post_status' => 'any',
+					'posts_per_page' => 1,
+					'fields' => 'ids',
+					'meta_key' => 'dlh_fpl_entry_id',
+					'meta_value' => (string) $entry_id,
+				)
+			);
+
+			if (!$manager_ids) {
+				$manager_ids = get_posts(
+					array(
+						'post_type' => 'dlh_manager',
+						'post_status' => 'any',
+						'posts_per_page' => 1,
+						'fields' => 'ids',
+						'meta_key' => 'dlh_team_name',
+						'meta_value' => $team_name,
+					)
+				);
+			}
+
+			$manager_id = absint($manager_ids[0] ?? 0);
+			if (!$manager_id) {
+				$manager_id = wp_insert_post(
+					array(
+						'post_type' => 'dlh_manager',
+						'post_status' => 'publish',
+						'post_title' => $real_name ? $real_name : $team_name,
+					),
+					true
+				);
+
+				if (is_wp_error($manager_id)) {
+					return $manager_id;
+				}
+				$created++;
+			} else {
+				$updated++;
+			}
+
+			update_post_meta($manager_id, 'dlh_real_name', $real_name);
+			update_post_meta($manager_id, 'dlh_team_name', $team_name);
+			update_post_meta($manager_id, 'dlh_fpl_entry_id', $entry_id);
+			update_post_meta($manager_id, 'dlh_fpl_league_entry_id', $league_entry_id);
+		}
+
+		return array(
+			'created' => $created,
+			'updated' => $updated,
+			'total' => $created + $updated,
+		);
 	}
 
 

@@ -25,8 +25,10 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 ## Season Rollover
 
 The plugin creates a current season record from the existing season label and
-FPL Draft league ID. Viewing the stats page saves successful API responses to
-that season automatically.
+FPL Draft league ID. Viewing the stats page saves successful API responses,
+including the completed draft choices, to that season automatically. The
+settings page can also sync manager names, team names, and entry IDs from the
+current FPL Draft league.
 
 Before changing to a new league, go to Settings > Draft League Hub and use
 **Archive current and start new season**. The plugin captures the outgoing

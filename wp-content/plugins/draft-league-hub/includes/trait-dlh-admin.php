@@ -71,6 +71,22 @@ trait DLH_Admin {
 			}
 		}
 
+		if (isset($_POST['dlh_sync_managers'])) {
+			check_admin_referer('dlh_sync_managers');
+			$result = $this->sync_current_season_managers();
+			if (is_wp_error($result)) {
+				echo '<div class="notice notice-error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-success"><p>' . esc_html(
+					sprintf(
+						__('Manager sync complete: %1$d created and %2$d updated.', 'draft-league-hub'),
+						absint($result['created']),
+						absint($result['updated'])
+					)
+				) . '</p></div>';
+			}
+		}
+
 		if (isset($_POST['dlh_rollover_season'])) {
 			check_admin_referer('dlh_rollover_season');
 			$new_label = sanitize_text_field(wp_unslash($_POST['new_season_label'] ?? ''));
@@ -217,6 +233,13 @@ trait DLH_Admin {
 				<form method="post" action="">
 					<?php wp_nonce_field('dlh_capture_season'); ?>
 					<p><button type="submit" name="dlh_capture_season" class="button"><?php echo esc_html__('Capture current season now', 'draft-league-hub'); ?></button></p>
+				</form>
+
+				<h3><?php echo esc_html__('Sync league managers', 'draft-league-hub'); ?></h3>
+				<p><?php echo esc_html__('Creates missing manager records and refreshes team names and FPL entry IDs from the current league.', 'draft-league-hub'); ?></p>
+				<form method="post" action="">
+					<?php wp_nonce_field('dlh_sync_managers'); ?>
+					<p><button type="submit" name="dlh_sync_managers" class="button"><?php echo esc_html__('Sync managers from FPL Draft', 'draft-league-hub'); ?></button></p>
 				</form>
 
 				<h3><?php echo esc_html__('Archive and start a new season', 'draft-league-hub'); ?></h3>
