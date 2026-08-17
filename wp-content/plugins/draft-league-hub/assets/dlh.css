@@ -529,7 +529,6 @@
 
 .dlh-winner-card__photo img,
 .dlh-winner-card__placeholder {
-	aspect-ratio: 4 / 5;
 	display: block;
 	height: auto;
 	object-fit: cover;
