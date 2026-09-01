@@ -61,6 +61,8 @@ trait DLH_Seasons {
 			event_id bigint(20) unsigned NOT NULL,
 			manager_id bigint(20) unsigned NOT NULL,
 			pick_text text NOT NULL,
+			odds_numerator int(10) unsigned DEFAULT NULL,
+			odds_denominator int(10) unsigned DEFAULT NULL,
 			result varchar(12) NOT NULL DEFAULT 'pending',
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,

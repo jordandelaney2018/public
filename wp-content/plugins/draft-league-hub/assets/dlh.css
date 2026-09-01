@@ -1090,6 +1090,10 @@
 	text-align: center;
 }
 
+.dlh-picks-table {
+	min-width: 860px;
+}
+
 .dlh-picks-table td:nth-child(2) strong,
 .dlh-picks-table td:nth-child(2) small {
 	display: block;
@@ -1106,7 +1110,13 @@
 	font-size: 1.05rem;
 }
 
-.dlh-pick-provisional {
+.dlh-picks-table__odds {
+	color: #8a6200;
+	font-size: 1.05rem;
+}
+
+.dlh-pick-provisional,
+.dlh-pick-odds-count {
 	color: var(--dlh-muted);
 	display: block;
 	font-size: 0.68rem;
@@ -1308,6 +1318,18 @@
 .dlh-pick-entry div span {
 	color: var(--dlh-muted);
 	overflow-wrap: anywhere;
+}
+
+.dlh-pick-odds {
+	background: #fff6df;
+	border-radius: 999px;
+	color: #8a6200;
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 900;
+	margin-left: 0.3rem;
+	padding: 0.18rem 0.38rem;
+	white-space: nowrap;
 }
 
 .dlh-pick-result {

@@ -40,6 +40,70 @@ trait DLH_Group_Picks {
 	}
 
 
+	private function parse_group_pick_odds($raw_odds) {
+		$raw_odds = trim(sanitize_text_field($raw_odds));
+		if ('' === $raw_odds) {
+			return null;
+		}
+
+		if (!preg_match('/^([1-9]\d{0,4})\s*\/\s*([1-9]\d{0,4})$/', $raw_odds, $matches)) {
+			return false;
+		}
+
+		return array(
+			'numerator' => absint($matches[1]),
+			'denominator' => absint($matches[2]),
+		);
+	}
+
+
+	private function group_pick_odds_label($numerator, $denominator, $reduce = false) {
+		$numerator = absint($numerator);
+		$denominator = absint($denominator);
+		if (!$numerator || !$denominator) {
+			return '';
+		}
+		if (!$reduce) {
+			return $numerator . '/' . $denominator;
+		}
+
+		$left = $numerator;
+		$right = $denominator;
+		while ($right) {
+			$remainder = $left % $right;
+			$left = $right;
+			$right = $remainder;
+		}
+		$divisor = max(1, $left);
+
+		return ($numerator / $divisor) . '/' . ($denominator / $divisor);
+	}
+
+
+	private function group_pick_average_odds_label($average_odds) {
+		if (null === $average_odds || (float) $average_odds <= 0) {
+			return '';
+		}
+
+		$average_odds = (float) $average_odds;
+		$best_numerator = 1;
+		$best_denominator = 1;
+		$best_error = PHP_FLOAT_MAX;
+
+		for ($denominator = 1; $denominator <= 100; $denominator++) {
+			$numerator = max(1, (int) round($average_odds * $denominator));
+			$error = abs($average_odds - ($numerator / $denominator));
+			if ($error < $best_error) {
+				$best_numerator = $numerator;
+				$best_denominator = $denominator;
+				$best_error = $error;
+			}
+		}
+
+		return $this->group_pick_odds_label($best_numerator, $best_denominator, true);
+	}
+
+
 	public function register_group_picks_admin_page() {
 		add_submenu_page(
 			'edit.php?post_type=dlh_manager',
@@ -93,11 +157,11 @@ trait DLH_Group_Picks {
 		$event_date = (string) ($event['event_date'] ?? current_time('Y-m-d'));
 		$gameweek = absint($event['gameweek'] ?? 0);
 		$notes = (string) ($event['notes'] ?? '');
-		$recent_events = $this->get_group_pick_events(null, 50);
+		$recent_events = $this->get_group_pick_events(null, 1000);
 		?>
 		<div class="wrap dlh-picks-admin">
 			<h1><?php echo esc_html__('Groupie Picks', 'draft-league-hub'); ?></h1>
-			<p><?php echo esc_html__('Record one Groupie Picks round at a time. Empty manager rows are ignored; clearing an existing pick removes that entry.', 'draft-league-hub'); ?></p>
+			<p><?php echo esc_html__('Record picks with fractional odds such as 1/1, 3/1, or 4/5. Use Edit beside any saved round to add or correct odds later. Empty manager rows are ignored; clearing an existing pick removes that entry.', 'draft-league-hub'); ?></p>
 
 			<?php if (!empty($_GET['saved'])) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php echo esc_html__('The picks round was saved.', 'draft-league-hub'); ?></p></div>
@@ -145,7 +209,7 @@ trait DLH_Group_Picks {
 						<h2><?php echo esc_html__('Manager picks', 'draft-league-hub'); ?></h2>
 						<div class="dlh-picks-admin__table-wrap">
 							<table class="widefat striped dlh-picks-admin__table">
-								<thead><tr><th><?php echo esc_html__('Manager', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Pick', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Result', 'draft-league-hub'); ?></th></tr></thead>
+								<thead><tr><th><?php echo esc_html__('Manager', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Pick', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Fractional odds', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Result', 'draft-league-hub'); ?></th></tr></thead>
 								<tbody>
 								<?php foreach ($managers as $manager) : ?>
 									<?php
@@ -157,6 +221,7 @@ trait DLH_Group_Picks {
 									<tr>
 										<th scope="row"><strong><?php echo esc_html(get_the_title($manager)); ?></strong><?php if ($team_name) : ?><small><?php echo esc_html($team_name); ?></small><?php endif; ?></th>
 										<td><input class="large-text" type="text" name="pick[<?php echo esc_attr($manager_id); ?>]" value="<?php echo esc_attr($manager_entry['pick_text'] ?? ''); ?>" placeholder="<?php echo esc_attr__('Enter their pick', 'draft-league-hub'); ?>"></td>
+										<td><input class="dlh-picks-admin__odds" type="text" name="odds[<?php echo esc_attr($manager_id); ?>]" value="<?php echo esc_attr($this->group_pick_odds_label($manager_entry['odds_numerator'] ?? 0, $manager_entry['odds_denominator'] ?? 0)); ?>" placeholder="1/1" pattern="[0-9]+\s*/\s*[0-9]+" title="<?php echo esc_attr__('Use fractional odds such as 1/1, 3/1, or 4/5.', 'draft-league-hub'); ?>" list="dlh-pick-common-odds"></td>
 										<td><select name="result[<?php echo esc_attr($manager_id); ?>]">
 											<?php foreach ($this->group_pick_results() as $result_key => $result_label) : ?>
 												<option value="<?php echo esc_attr($result_key); ?>" <?php selected($current_result, $result_key); ?>><?php echo esc_html($result_label); ?></option>
@@ -166,6 +231,7 @@ trait DLH_Group_Picks {
 								<?php endforeach; ?>
 								</tbody>
 							</table>
+							<datalist id="dlh-pick-common-odds"><option value="1/5"><option value="1/4"><option value="1/3"><option value="1/2"><option value="4/5"><option value="1/1"><option value="6/4"><option value="2/1"><option value="3/1"><option value="4/1"><option value="5/1"><option value="10/1"></datalist>
 						</div>
 						<?php submit_button($event ? __('Update picks round', 'draft-league-hub') : __('Save picks round', 'draft-league-hub'), 'primary', 'dlh_save_group_pick_event'); ?>
 						<?php if ($event) : ?><a class="button" href="<?php echo esc_url(add_query_arg(array('post_type' => 'dlh_manager', 'page' => 'dlh-group-picks'), admin_url('edit.php'))); ?>"><?php echo esc_html__('Start a new round', 'draft-league-hub'); ?></a><?php endif; ?>
@@ -173,10 +239,10 @@ trait DLH_Group_Picks {
 				</div>
 			<?php endif; ?>
 
-			<h2><?php echo esc_html__('Recent rounds', 'draft-league-hub'); ?></h2>
+			<h2><?php echo esc_html__('Saved rounds', 'draft-league-hub'); ?></h2>
 			<?php if ($recent_events) : ?>
 				<table class="widefat striped dlh-picks-admin__recent">
-					<thead><tr><th><?php echo esc_html__('Date', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Round', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Season', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Picks', 'draft-league-hub'); ?></th><th></th></tr></thead>
+					<thead><tr><th><?php echo esc_html__('Date', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Round', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Season', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Picks', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Odds added', 'draft-league-hub'); ?></th><th></th></tr></thead>
 					<tbody>
 					<?php foreach ($recent_events as $recent_event) : ?>
 						<tr>
@@ -184,6 +250,7 @@ trait DLH_Group_Picks {
 							<td><strong><?php echo esc_html($recent_event['title']); ?></strong><?php if (!empty($recent_event['gameweek'])) : ?> <span class="description"><?php echo esc_html(sprintf(__('GW%d', 'draft-league-hub'), absint($recent_event['gameweek']))); ?></span><?php endif; ?></td>
 							<td><?php echo esc_html($recent_event['season_label']); ?></td>
 							<td><?php echo esc_html(absint($recent_event['entry_count'])); ?></td>
+							<td><?php echo esc_html(absint($recent_event['priced_entry_count']) . ' / ' . absint($recent_event['entry_count'])); ?></td>
 							<td><a href="<?php echo esc_url(add_query_arg(array('post_type' => 'dlh_manager', 'page' => 'dlh-group-picks', 'edit' => absint($recent_event['id'])), admin_url('edit.php'))); ?>"><?php echo esc_html__('Edit', 'draft-league-hub'); ?></a></td>
 						</tr>
 					<?php endforeach; ?>
@@ -258,12 +325,14 @@ trait DLH_Group_Picks {
 		}
 
 		$raw_picks = isset($_POST['pick']) && is_array($_POST['pick']) ? wp_unslash($_POST['pick']) : array();
+		$raw_odds = isset($_POST['odds']) && is_array($_POST['odds']) ? wp_unslash($_POST['odds']) : array();
 		$raw_results = isset($_POST['result']) && is_array($_POST['result']) ? wp_unslash($_POST['result']) : array();
 		$valid_results = array_keys($this->group_pick_results());
 
 		foreach ($this->get_managers() as $manager) {
 			$manager_id = absint($manager->ID);
 			$pick_text = sanitize_text_field($raw_picks[$manager_id] ?? '');
+			$odds = $this->parse_group_pick_odds($raw_odds[$manager_id] ?? '');
 			$result = sanitize_key($raw_results[$manager_id] ?? 'pending');
 			$result = in_array($result, $valid_results, true) ? $result : 'pending';
 
@@ -275,15 +344,30 @@ trait DLH_Group_Picks {
 				}
 				continue;
 			}
+			if (false === $odds) {
+				$wpdb->query('ROLLBACK');
+				return new WP_Error(
+					'dlh_pick_invalid_odds',
+					sprintf(
+						__('Odds for %s must use fractional format, such as 1/1, 3/1, or 4/5.', 'draft-league-hub'),
+						get_the_title($manager)
+					)
+				);
+			}
+
+			$odds_numerator = $odds['numerator'] ?? null;
+			$odds_denominator = $odds['denominator'] ?? null;
 
 			$entry_saved = $wpdb->query(
 				$wpdb->prepare(
-					"INSERT INTO {$entries_table} (event_id, manager_id, pick_text, result, created_at, updated_at)
-					VALUES (%d, %d, %s, %s, %s, %s)
-					ON DUPLICATE KEY UPDATE pick_text = VALUES(pick_text), result = VALUES(result), updated_at = VALUES(updated_at)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"INSERT INTO {$entries_table} (event_id, manager_id, pick_text, odds_numerator, odds_denominator, result, created_at, updated_at)
+					VALUES (%d, %d, %s, NULLIF(%d, 0), NULLIF(%d, 0), %s, %s, %s)
+					ON DUPLICATE KEY UPDATE pick_text = VALUES(pick_text), odds_numerator = VALUES(odds_numerator), odds_denominator = VALUES(odds_denominator), result = VALUES(result), updated_at = VALUES(updated_at)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					$event_id,
 					$manager_id,
 					$pick_text,
+					$odds_numerator,
+					$odds_denominator,
 					$result,
 					$now,
 					$now
@@ -328,7 +412,8 @@ trait DLH_Group_Picks {
 			$where = $wpdb->prepare('WHERE events.season_id = %d', absint($season_id));
 		}
 		$sql = "SELECT events.*, seasons.label AS season_label,
-			(SELECT COUNT(*) FROM {$entries_table} counted_entries WHERE counted_entries.event_id = events.id) AS entry_count
+			(SELECT COUNT(*) FROM {$entries_table} counted_entries WHERE counted_entries.event_id = events.id) AS entry_count,
+			(SELECT COUNT(*) FROM {$entries_table} priced_entries WHERE priced_entries.event_id = events.id AND priced_entries.odds_numerator IS NOT NULL AND priced_entries.odds_denominator > 0) AS priced_entry_count
 			FROM {$events_table} events
 			INNER JOIN {$seasons_table} seasons ON seasons.id = events.season_id
 			{$where}
@@ -353,7 +438,9 @@ trait DLH_Group_Picks {
 				SUM(CASE WHEN entries.result = 'win' THEN 1 ELSE 0 END) AS wins,
 				SUM(CASE WHEN entries.result = 'loss' THEN 1 ELSE 0 END) AS losses,
 				SUM(CASE WHEN entries.result = 'void' THEN 1 ELSE 0 END) AS voids,
-				SUM(CASE WHEN entries.result = 'pending' THEN 1 ELSE 0 END) AS pending
+				SUM(CASE WHEN entries.result = 'pending' THEN 1 ELSE 0 END) AS pending,
+				SUM(CASE WHEN entries.odds_numerator IS NOT NULL AND entries.odds_denominator > 0 THEN 1 ELSE 0 END) AS odds_count,
+				AVG(CASE WHEN entries.odds_numerator IS NOT NULL AND entries.odds_denominator > 0 THEN entries.odds_numerator / entries.odds_denominator ELSE NULL END) AS average_odds
 			FROM {$entries_table} entries
 			INNER JOIN {$events_table} events ON events.id = entries.event_id
 			{$where}
@@ -374,6 +461,8 @@ trait DLH_Group_Picks {
 			$losses = absint($stats['losses'] ?? 0);
 			$voids = absint($stats['voids'] ?? 0);
 			$pending = absint($stats['pending'] ?? 0);
+			$odds_count = absint($stats['odds_count'] ?? 0);
+			$average_odds = $odds_count ? (float) $stats['average_odds'] : null;
 			$graded = $wins + $losses;
 			$leaderboard[] = array(
 				'manager_id' => $manager_id,
@@ -386,6 +475,8 @@ trait DLH_Group_Picks {
 				'graded' => $graded,
 				'total' => $graded + $voids + $pending,
 				'win_percentage' => $graded ? ($wins / $graded) * 100 : null,
+				'odds_count' => $odds_count,
+				'average_odds' => $average_odds,
 			);
 		}
 
@@ -440,7 +531,7 @@ trait DLH_Group_Picks {
 				<div>
 					<p class="dlh-kicker"><?php echo esc_html__('The group knows best. Allegedly.', 'draft-league-hub'); ?></p>
 					<h2><?php echo esc_html__('Groupie Picks', 'draft-league-hub'); ?></h2>
-					<p><?php echo esc_html__('Every call, every result, and the win percentage table that settles who actually knows ball.', 'draft-league-hub'); ?></p>
+					<p><?php echo esc_html__('Every call, every result, and the win percentage and average fractional odds that settle who actually knows ball.', 'draft-league-hub'); ?></p>
 				</div>
 				<span class="dlh-pill"><?php echo esc_html($all_time ? __('All time', 'draft-league-hub') : ($selected_season['label'] ?? __('Current season', 'draft-league-hub'))); ?></span>
 			</div>
@@ -462,17 +553,18 @@ trait DLH_Group_Picks {
 
 			<section class="dlh-panel">
 				<div class="dlh-section__head">
-					<div><h3><?php echo esc_html__('Win percentage leaderboard', 'draft-league-hub'); ?></h3><p><?php echo esc_html__('Win % is wins divided by graded picks. Void and pending picks do not count.', 'draft-league-hub'); ?></p></div>
+					<div><h3><?php echo esc_html__('Win percentage leaderboard', 'draft-league-hub'); ?></h3><p><?php echo esc_html__('Win % is wins divided by graded picks. Average odds uses every pick with recorded fractional odds, including pending and void picks.', 'draft-league-hub'); ?></p></div>
 				</div>
 				<div class="dlh-table-wrap">
 					<table class="dlh-table dlh-picks-table">
-						<thead><tr><th><?php echo esc_html__('#', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Manager', 'draft-league-hub'); ?></th><th><?php echo esc_html__('W', 'draft-league-hub'); ?></th><th><?php echo esc_html__('L', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Void', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Pending', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Graded', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Win %', 'draft-league-hub'); ?></th></tr></thead>
+						<thead><tr><th><?php echo esc_html__('#', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Manager', 'draft-league-hub'); ?></th><th><?php echo esc_html__('W', 'draft-league-hub'); ?></th><th><?php echo esc_html__('L', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Void', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Pending', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Graded', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Avg odds', 'draft-league-hub'); ?></th><th><?php echo esc_html__('Win %', 'draft-league-hub'); ?></th></tr></thead>
 						<tbody>
 						<?php foreach ($leaderboard as $index => $row) : ?>
 							<tr>
 								<td><strong><?php echo esc_html($index + 1); ?></strong></td>
 								<td><strong><?php echo esc_html($row['name']); ?></strong><?php if ($row['team_name']) : ?><small><?php echo esc_html($row['team_name']); ?></small><?php endif; ?></td>
 								<td><?php echo esc_html($row['wins']); ?></td><td><?php echo esc_html($row['losses']); ?></td><td><?php echo esc_html($row['voids']); ?></td><td><?php echo esc_html($row['pending']); ?></td><td><?php echo esc_html($row['graded']); ?></td>
+								<td><strong class="dlh-picks-table__odds"><?php echo esc_html($row['odds_count'] ? $this->group_pick_average_odds_label($row['average_odds']) : '—'); ?></strong><?php if ($row['odds_count']) : ?><span class="dlh-pick-odds-count"><?php echo esc_html(sprintf(_n('%d price', '%d prices', $row['odds_count'], 'draft-league-hub'), $row['odds_count'])); ?></span><?php endif; ?></td>
 								<td><strong class="dlh-picks-table__percentage"><?php echo esc_html(null === $row['win_percentage'] ? '—' : number_format_i18n($row['win_percentage'], 1) . '%'); ?></strong><?php if ($row['graded'] > 0 && $row['graded'] < 3) : ?><span class="dlh-pick-provisional"><?php echo esc_html__('Provisional', 'draft-league-hub'); ?></span><?php endif; ?></td>
 							</tr>
 						<?php endforeach; ?>
@@ -498,6 +590,7 @@ trait DLH_Group_Picks {
 								<span><strong><?php echo esc_html($row['wins']); ?></strong> <?php echo esc_html(_n('win', 'wins', $row['wins'], 'draft-league-hub')); ?></span>
 								<span><strong><?php echo esc_html($row['losses']); ?></strong> <?php echo esc_html(_n('loss', 'losses', $row['losses'], 'draft-league-hub')); ?></span>
 								<span><strong><?php echo esc_html($row['graded']); ?></strong> <?php echo esc_html__('graded', 'draft-league-hub'); ?></span>
+								<span><strong><?php echo esc_html($row['odds_count'] ? $this->group_pick_average_odds_label($row['average_odds']) : '—'); ?></strong> <?php echo esc_html__('avg odds', 'draft-league-hub'); ?></span>
 								<?php if ($row['voids']) : ?><span><strong><?php echo esc_html($row['voids']); ?></strong> <?php echo esc_html__('void', 'draft-league-hub'); ?></span><?php endif; ?>
 								<?php if ($row['pending']) : ?><span><strong><?php echo esc_html($row['pending']); ?></strong> <?php echo esc_html__('pending', 'draft-league-hub'); ?></span><?php endif; ?>
 							</div>
@@ -519,7 +612,8 @@ trait DLH_Group_Picks {
 							<?php if (!empty($event['notes'])) : ?><p class="dlh-pick-event__notes"><?php echo esc_html($event['notes']); ?></p><?php endif; ?>
 							<div class="dlh-pick-event__entries">
 							<?php foreach ($this->get_group_pick_entries_for_event($event['id']) as $entry) : ?>
-								<div class="dlh-pick-entry"><div><strong><?php echo esc_html($this->manager_name($entry['manager_id'])); ?></strong><span><?php echo esc_html($entry['pick_text']); ?></span></div><span class="dlh-pick-result dlh-pick-result--<?php echo esc_attr($entry['result']); ?>"><?php echo esc_html($this->group_pick_results()[$entry['result']] ?? ucfirst($entry['result'])); ?></span></div>
+								<?php $odds_label = $this->group_pick_odds_label($entry['odds_numerator'] ?? 0, $entry['odds_denominator'] ?? 0); ?>
+								<div class="dlh-pick-entry"><div><strong><?php echo esc_html($this->manager_name($entry['manager_id'])); ?></strong><span><?php echo esc_html($entry['pick_text']); ?><?php if ($odds_label) : ?> <small class="dlh-pick-odds"><?php echo esc_html(sprintf(__('Odds %s', 'draft-league-hub'), $odds_label)); ?></small><?php endif; ?></span></div><span class="dlh-pick-result dlh-pick-result--<?php echo esc_attr($entry['result']); ?>"><?php echo esc_html($this->group_pick_results()[$entry['result']] ?? ucfirst($entry['result'])); ?></span></div>
 							<?php endforeach; ?>
 							</div>
 						</details>

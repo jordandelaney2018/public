@@ -13,7 +13,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 - Cached FPL Draft API standings widget.
 - Season records and locally stored FPL Draft snapshots for safe annual rollover.
 - Season tabs and a complete draft recap with the order, original squads, and full board.
-- Season-aware Groupie Picks rounds with a public win-percentage leaderboard.
+- Season-aware Groupie Picks rounds with fractional odds and a public win-percentage leaderboard.
 - A season-aware 12-team Draft Cup with a random draw and knockout bracket.
 
 Past Winner cards serve the original uploaded photo rather than a recompressed
@@ -63,9 +63,11 @@ and FPL API cache. Managers and unrelated CMS content are retained.
 ## Groupie Picks
 
 Open **Managers > Groupie Picks** to add a round. Each round has a title, date,
-optional gameweek, and one pick/result row for every manager. Pending and void
+optional gameweek, and one pick, fractional-odds, and result row for every
+manager. Saved rounds can be edited later to add missing odds. Pending and void
 picks stay in the history but only wins and losses count towards win percentage.
-Managers with fewer than three graded picks are labelled provisional.
+Average odds include every pick with a recorded price. Managers with fewer than
+three graded picks are labelled provisional.
 
 ## Draft Cup
 

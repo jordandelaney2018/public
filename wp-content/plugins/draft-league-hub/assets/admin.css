@@ -38,11 +38,15 @@
 }
 
 .dlh-picks-admin__table {
-	min-width: 760px;
+	min-width: 880px;
 }
 
 .dlh-picks-admin__table th:first-child {
 	width: 220px;
+}
+
+.dlh-picks-admin__table th:nth-child(3) {
+	width: 130px;
 }
 
 .dlh-picks-admin__table th:last-child {
