@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Draft League Hub
  * Description: A small WordPress hub for FPL Draft leagues: joke news, monthly votes, sidebets, availability polls, and FPL Draft API widgets.
- * Version: 0.6.4
+ * Version: 0.6.5
  * Author: Codex
  * Text Domain: draft-league-hub
  */
@@ -44,7 +44,7 @@ final class DLH_Plugin {
 	use DLH_Api;
 	use DLH_Helpers;
 
-	const VERSION = '0.6.4';
+	const VERSION = '0.6.5';
 	const SCHEMA_VERSION = '1.3.0';
 	const OPTION = 'dlh_options';
 	const CRON_HOOK = 'dlh_daily_maintenance';

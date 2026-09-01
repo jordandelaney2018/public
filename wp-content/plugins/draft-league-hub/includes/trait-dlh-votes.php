@@ -81,6 +81,8 @@ trait DLH_Votes {
 				);
 			}
 
+			$this->sync_open_vote_questions($post_id);
+
 			return $post_id;
 		}
 
@@ -102,6 +104,25 @@ trait DLH_Votes {
 		}
 
 		return absint($post_id);
+	}
+
+
+	private function sync_open_vote_questions($vote_id) {
+		$vote_id = absint($vote_id);
+		if (!$vote_id || $this->is_vote_closed($vote_id)) {
+			return false;
+		}
+
+		$options = $this->get_options();
+		$questions = $this->parse_default_questions($options['default_questions']);
+		$current_questions = get_post_meta($vote_id, 'dlh_questions', true);
+		$current_questions = is_array($current_questions) ? $current_questions : array();
+
+		if ($current_questions === $questions) {
+			return false;
+		}
+
+		return (bool) update_post_meta($vote_id, 'dlh_questions', $questions);
 	}
 
 

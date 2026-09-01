@@ -97,4 +97,4 @@ Those are good candidates for future widgets such as trade history, waiver activ
 
 ## Notes
 
-Monthly votes are created automatically for the current month when the vote page is viewed, and once a day by WP-Cron. Existing monthly votes keep their original question set, so changes to default questions apply to future months.
+Monthly votes are created automatically for the current month when the vote page is viewed, and once a day by WP-Cron. Changes to the default questions update the current open ballot and apply to future months. Closed ballots keep their original question set.

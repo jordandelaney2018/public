@@ -150,7 +150,8 @@ trait DLH_Admin {
 				echo '<div class="notice notice-error"><p>' . esc_html($season_result->get_error_message()) . '</p></div>';
 			} else {
 				update_option(self::OPTION, $options);
-				echo '<div class="updated notice"><p>' . esc_html__('Draft League Hub settings saved.', 'draft-league-hub') . '</p></div>';
+				$this->ensure_current_vote_month();
+				echo '<div class="updated notice"><p>' . esc_html__('Draft League Hub settings saved. Monthly vote questions now apply to any current open ballot and future ballots.', 'draft-league-hub') . '</p></div>';
 			}
 		}
 
@@ -210,7 +211,8 @@ trait DLH_Admin {
 						<th scope="row"><label for="default_questions"><?php echo esc_html__('Monthly vote questions', 'draft-league-hub'); ?></label></th>
 						<td>
 							<textarea name="default_questions" id="default_questions" class="large-text code" rows="8"><?php echo esc_textarea($options['default_questions']); ?></textarea>
-							<p class="description"><?php echo esc_html__('One per line. Format: Question|manager or Question|text. New months copy these defaults.', 'draft-league-hub'); ?></p>
+							<p class="description"><?php echo esc_html__('One per line. Format: Question|manager or Question|text. Changes update the current open ballot and become the defaults for future months; closed ballots are not changed.', 'draft-league-hub'); ?></p>
+							<p class="description"><?php echo esc_html__('If voting has already started, renaming or removing a question hides its existing answers until those voters submit the updated ballot.', 'draft-league-hub'); ?></p>
 						</td>
 					</tr>
 					<tr>
