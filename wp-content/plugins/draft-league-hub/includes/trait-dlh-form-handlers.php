@@ -49,6 +49,10 @@ trait DLH_Form_Handlers {
 
 		$questions = get_post_meta($vote_id, 'dlh_questions', true);
 		$questions = is_array($questions) ? $questions : array();
+		$submitted_answers = $_POST['answer'] ?? array();
+		if (!is_array($submitted_answers)) {
+			$this->redirect_with_notice('invalid_vote_answer');
+		}
 		$answers = array();
 
 		foreach ($questions as $question) {
@@ -58,11 +62,17 @@ trait DLH_Form_Handlers {
 				continue;
 			}
 
-			$value = $_POST['answer'][$key] ?? '';
+			$value = $submitted_answers[$key] ?? '';
+			if (!is_scalar($value)) {
+				$this->redirect_with_notice('invalid_vote_answer');
+			}
 			if ('manager' === $type) {
 				$value = absint($value);
 			} else {
 				$value = sanitize_text_field(wp_unslash($value));
+			}
+			if ('choice' === $type && '' !== $value && !in_array($value, $question['options'] ?? array(), true)) {
+				$this->redirect_with_notice('invalid_vote_answer');
 			}
 
 			$answers[$key] = array(

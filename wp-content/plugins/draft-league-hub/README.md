@@ -60,6 +60,34 @@ and FPL API cache. Managers and unrelated CMS content are retained.
 - `[dlh_group_picks]` - Groupie Picks leaderboard and round history.
 - `[dlh_draft_cup]` - Draft Cup bracket and results.
 
+## Monthly Award Options
+
+In **Settings > Draft League Hub > Monthly vote questions**, enter one award per
+line. The supported formats are:
+
+```text
+Manager of the month|manager
+Quote of the month|text
+Best trade of the month|choice|Salah for Haaland|Palmer for Saka|Watkins for Isak
+```
+
+Use `choice` to show a dropdown containing your own answer options. Separate each
+option with `|`; commas are allowed inside options. Blank and duplicate options
+are ignored, and each choice question must contain at least one option. Voters
+can select one option or leave the answer blank, and can update their vote while
+the ballot is open.
+
+Changes apply to the current open ballot and future months. Closed ballots keep
+their original questions and options. If an option is renamed or removed after
+voting starts, votes for its original label remain in the results until those
+voters update their votes. Keep the award title unchanged to retain its connection
+to existing answers.
+
+To run the isolated voting regression checks from the WordPress root, use
+`php wp-content/plugins/draft-league-hub/tests/monthly-vote-choices.php`.
+These checks use WordPress formatting functions and in-memory ballot storage;
+they do not need a running database or change saved site data.
+
 ## Groupie Picks
 
 Open **Managers > Groupie Picks** to add a round. Each round has a title, date,

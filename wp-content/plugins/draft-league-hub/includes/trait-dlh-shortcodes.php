@@ -101,6 +101,17 @@ trait DLH_Shortcodes {
 							<label for="answer-<?php echo esc_attr($key); ?>"><?php echo esc_html($question['label']); ?></label>
 							<?php if ('manager' === $type) : ?>
 								<?php echo $this->manager_select('answer[' . esc_attr($key) . ']', absint($current_answer), __('Choose manager', 'draft-league-hub'), 'answer-' . esc_attr($key)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							<?php elseif ('choice' === $type) : ?>
+								<?php $answer_options = $question['options'] ?? array(); ?>
+								<select id="answer-<?php echo esc_attr($key); ?>" name="answer[<?php echo esc_attr($key); ?>]">
+									<option value=""><?php echo esc_html__('Choose an option', 'draft-league-hub'); ?></option>
+									<?php if ('' !== (string) $current_answer && !in_array((string) $current_answer, $answer_options, true)) : ?>
+										<option value="" selected disabled><?php echo esc_html(sprintf(__('Previous answer: %s (no longer available)', 'draft-league-hub'), $current_answer)); ?></option>
+									<?php endif; ?>
+									<?php foreach ($answer_options as $answer_option) : ?>
+										<option value="<?php echo esc_attr($answer_option); ?>" <?php selected($current_answer, $answer_option); ?>><?php echo esc_html($answer_option); ?></option>
+									<?php endforeach; ?>
+								</select>
 							<?php else : ?>
 								<input id="answer-<?php echo esc_attr($key); ?>" type="text" name="answer[<?php echo esc_attr($key); ?>]" value="<?php echo esc_attr($current_answer); ?>" placeholder="<?php echo esc_attr__('Nomination', 'draft-league-hub'); ?>">
 							<?php endif; ?>

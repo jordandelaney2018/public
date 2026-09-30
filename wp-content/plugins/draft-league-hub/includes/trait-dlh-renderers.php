@@ -59,7 +59,7 @@ trait DLH_Renderers {
 				}
 
 				$label = 'manager' === $type ? $this->manager_name(absint($value)) : sanitize_text_field($value);
-				if (!$label) {
+				if ('' === $label) {
 					continue;
 				}
 
@@ -947,6 +947,7 @@ trait DLH_Renderers {
 		$messages = array(
 			'vote_saved' => __('Vote saved. Democracy survives another month.', 'draft-league-hub'),
 			'vote_closed' => __('That monthly vote is closed.', 'draft-league-hub'),
+			'invalid_vote_answer' => __('Your vote was not saved. Please choose an available option for each list answer, or leave it blank, and submit again.', 'draft-league-hub'),
 			'sidebet_saved' => __('Sidebet added. Receipts have been filed.', 'draft-league-hub'),
 			'sidebet_pending' => __('Sidebet submitted for approval.', 'draft-league-hub'),
 			'sidebet_updated' => __('Sidebet updated. The record has been amended.', 'draft-league-hub'),

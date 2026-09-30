@@ -145,9 +145,13 @@ trait DLH_Admin {
 			$options['default_questions'] = sanitize_textarea_field(wp_unslash($_POST['default_questions'] ?? ''));
 			$options['sidebets_require_login'] = !empty($_POST['sidebets_require_login']) ? 1 : 0;
 
-			$season_result = $this->sync_current_season_from_options($options);
-			if (is_wp_error($season_result)) {
-				echo '<div class="notice notice-error"><p>' . esc_html($season_result->get_error_message()) . '</p></div>';
+			$settings_result = $this->validate_vote_questions($options['default_questions']);
+			if (!is_wp_error($settings_result)) {
+				$settings_result = $this->sync_current_season_from_options($options);
+			}
+			if (is_wp_error($settings_result)) {
+				$unsaved_questions = $options['default_questions'];
+				echo '<div class="notice notice-error"><p>' . esc_html($settings_result->get_error_message()) . '</p></div>';
 			} else {
 				update_option(self::OPTION, $options);
 				$this->ensure_current_vote_month();
@@ -162,6 +166,9 @@ trait DLH_Admin {
 		}
 
 		$options = $this->get_options();
+		if (isset($unsaved_questions)) {
+			$options['default_questions'] = $unsaved_questions;
+		}
 		$current_season = $this->get_current_season();
 		$seasons = $this->get_seasons();
 		$season_identity_locked = $current_season && !empty($current_season['snapshot_captured_at']);
@@ -211,7 +218,9 @@ trait DLH_Admin {
 						<th scope="row"><label for="default_questions"><?php echo esc_html__('Monthly vote questions', 'draft-league-hub'); ?></label></th>
 						<td>
 							<textarea name="default_questions" id="default_questions" class="large-text code" rows="8"><?php echo esc_textarea($options['default_questions']); ?></textarea>
-							<p class="description"><?php echo esc_html__('One per line. Format: Question|manager or Question|text. Changes update the current open ballot and become the defaults for future months; closed ballots are not changed.', 'draft-league-hub'); ?></p>
+							<p class="description"><?php echo esc_html__('One question per line. Use Question|manager for the manager dropdown, Question|text for a written answer, or Question|choice|Option one|Option two for your own list of answers.', 'draft-league-hub'); ?></p>
+							<p class="description"><?php echo esc_html__('Example: Best trade of the month|choice|Salah for Haaland|Palmer for Saka|Watkins for Isak. Separate each option with |; commas can be used within an option. Blank and duplicate options are ignored. Include at least one option.', 'draft-league-hub'); ?></p>
+							<p class="description"><?php echo esc_html__('Changes update the current open ballot and become the defaults for future months; closed ballots are not changed. Votes for renamed or removed options stay in the results until those voters update their votes.', 'draft-league-hub'); ?></p>
 							<p class="description"><?php echo esc_html__('If voting has already started, renaming or removing a question hides its existing answers until those voters submit the updated ballot.', 'draft-league-hub'); ?></p>
 						</td>
 					</tr>

@@ -27,11 +27,20 @@ trait DLH_Votes {
 				$seen[$key] = 1;
 			}
 
-			$questions[] = array(
+			$question = array(
 				'key' => $key,
 				'label' => $label,
 				'type' => $type,
 			);
+			if ('choice' === $type) {
+				$question['options'] = array_values(array_unique(array_filter(
+					array_map('sanitize_text_field', array_slice($parts, 2)),
+					static function ($option) {
+						return '' !== $option;
+					}
+				)));
+			}
+			$questions[] = $question;
 		}
 
 		return $questions;
@@ -40,7 +49,21 @@ trait DLH_Votes {
 
 	private function normalize_question_type($type) {
 		$type = sanitize_key($type);
-		return in_array($type, array('manager', 'text'), true) ? $type : 'text';
+		return in_array($type, array('manager', 'text', 'choice'), true) ? $type : 'text';
+	}
+
+
+	private function validate_vote_questions($raw) {
+		foreach ($this->parse_default_questions($raw) as $question) {
+			if ('choice' === $question['type'] && empty($question['options'])) {
+				return new WP_Error(
+					'missing_vote_options',
+					sprintf(__('Add at least one answer option for "%s" using Question|choice|Option one|Option two.', 'draft-league-hub'), $question['label'])
+				);
+			}
+		}
+
+		return true;
 	}
 
 
