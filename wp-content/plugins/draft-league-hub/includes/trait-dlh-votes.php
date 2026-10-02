@@ -197,6 +197,92 @@ trait DLH_Votes {
 	}
 
 
+	private function vote_question_counts($question, $votes) {
+		$key = sanitize_key($question['key'] ?? '');
+		$type = $this->normalize_question_type($question['type'] ?? 'text');
+		$counts = array();
+
+		foreach ($votes as $vote) {
+			$value = $vote['answers'][$key]['value'] ?? '';
+			if (!is_scalar($value) || '' === $value || 0 === $value) {
+				continue;
+			}
+
+			$label = 'manager' === $type ? $this->manager_name(absint($value)) : sanitize_text_field($value);
+			if ('' !== $label) {
+				$counts[$label] = ($counts[$label] ?? 0) + 1;
+			}
+		}
+
+		arsort($counts);
+		return $counts;
+	}
+
+
+	private function get_monthly_vote_history() {
+		$ballots = get_posts(
+			array(
+				'post_type' => 'dlh_vote_month',
+				'post_status' => 'publish',
+				'posts_per_page' => -1,
+				'orderby' => array('date' => 'DESC', 'ID' => 'DESC'),
+				'meta_query' => array(
+					array(
+						'key' => 'dlh_open_until',
+						'value' => current_time('mysql'),
+						'compare' => '<',
+						'type' => 'DATETIME',
+					),
+				),
+			)
+		);
+		$history = array();
+
+		foreach ($ballots as $ballot) {
+			if (!$this->is_vote_closed($ballot->ID)) {
+				continue;
+			}
+
+			$questions = get_post_meta($ballot->ID, 'dlh_questions', true);
+			if (!is_array($questions) || !$questions) {
+				continue;
+			}
+			$votes = get_post_meta($ballot->ID, 'dlh_votes', true);
+			$votes = is_array($votes) ? $votes : array();
+			$month = get_post_meta($ballot->ID, 'dlh_award_month', true);
+			// Older ballots used their calendar month before award months were introduced.
+			if (!is_string($month) || !preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month)) {
+				$month = get_post_meta($ballot->ID, 'dlh_month', true);
+			}
+			$month_date = is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month)
+				? DateTime::createFromFormat('!Y-m', $month, wp_timezone()) : false;
+			$awards = array();
+
+			foreach ($questions as $question) {
+				$counts = $this->vote_question_counts($question, $votes);
+				$winning_count = $counts ? max($counts) : 0;
+				$awards[] = array(
+					'label' => $question['label'] ?? '',
+					'is_quote' => 'manager' !== $this->normalize_question_type($question['type'] ?? 'text') && false !== stripos($question['label'] ?? '', 'quote'),
+					'winners' => array_keys($counts, $winning_count, true),
+					'votes' => $winning_count,
+				);
+			}
+
+			$history[] = array(
+				'month' => $month_date ? $month_date->format('Y-m') : '',
+				'label' => $month_date ? wp_date('F Y', $month_date->getTimestamp()) : get_the_title($ballot->ID),
+				'awards' => $awards,
+			);
+		}
+
+		usort($history, static function ($a, $b) {
+			return strcmp($b['month'], $a['month']);
+		});
+		return $history;
+	}
+
+
 	private function current_vote_key($create = false) {
 		if (is_user_logged_in()) {
 			return 'user_' . get_current_user_id();

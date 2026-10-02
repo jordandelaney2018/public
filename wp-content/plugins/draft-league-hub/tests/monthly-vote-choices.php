@@ -32,7 +32,11 @@ function update_post_meta($id, $key, $value) { $GLOBALS['dlh_test_meta'][$id][$k
 function get_post_type($id) { return 1 === $id ? 'dlh_vote_month' : ''; }
 function get_the_title($id) { return 'Test Awards'; }
 function is_user_logged_in() { return false; }
-function current_user_can($capability) { return false; }
+function current_user_can($capability) { return $GLOBALS['dlh_test_admin'] ?? false; }
+function get_posts($args) {
+	$GLOBALS['dlh_test_query'] = $args;
+	return array_map(static function ($id) { return (object) array('ID' => $id); }, $GLOBALS['dlh_test_ballots'] ?? array());
+}
 function wp_get_current_user() { return (object) array('ID' => 0, 'display_name' => ''); }
 function wp_create_nonce($action) { return 'test-nonce'; }
 
@@ -47,11 +51,13 @@ class DLH_Choice_Test {
 		parse_default_questions as public parse;
 		validate_vote_questions as public validate;
 		sync_open_vote_questions as public sync;
+		get_monthly_vote_history as public history;
 	}
 	use DLH_Form_Handlers;
 	use DLH_Shortcodes;
 	use DLH_Renderers {
 		render_vote_results as public results;
+		render_monthly_vote_history as public history_html;
 	}
 
 	public $raw = '';

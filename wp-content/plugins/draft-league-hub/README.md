@@ -6,7 +6,7 @@ A lightweight WordPress plugin for a Premier League FPL Draft mini-league site.
 
 - Manager directory in the WordPress dashboard.
 - League News custom post type for joke stories and matchday slander.
-- Auto-generated monthly vote page.
+- Auto-generated monthly vote page with a past winners table.
 - Sidebets page with front-end submissions.
 - Hall of Fame gallery with a CMS-managed Past Winners tab.
 - Calendar page for upcoming draft dates, deadlines, and league events.
@@ -52,7 +52,7 @@ and FPL API cache. Managers and unrelated CMS content are retained.
 
 - `[dlh_home]` - front-page hero and latest news.
 - `[dlh_news]` - league news listing.
-- `[dlh_monthly_votes]` - current monthly vote.
+- `[dlh_monthly_votes]` - current monthly vote and past winners.
 - `[dlh_sidebets]` - sidebet board and submission form.
 - `[dlh_hall_of_fame]` - gallery and Past Winners tabs.
 - `[dlh_calendar]` - upcoming draft dates.
@@ -83,8 +83,18 @@ voting starts, votes for its original label remain in the results until those
 voters update their votes. Keep the award title unchanged to retain its connection
 to existing answers.
 
+The **Past Winners** table appears below the current ballot and results. It
+automatically lists published, closed ballots with the newest award month first,
+using each ballot's saved questions and votes. Each row shows the month, award,
+winning manager or nomination, and winning vote count. Quote awards include the
+full winning quote as entered (include the speaker in the nomination if wanted).
+Ties show all joint winners; awards with no nominations show **No votes cast**.
+Open ballots stay out of the archive, including for admins. Older ballots without
+an award-month field use their original calendar month.
+
 To run the isolated voting regression checks from the WordPress root, use
-`php wp-content/plugins/draft-league-hub/tests/monthly-vote-choices.php`.
+`php wp-content/plugins/draft-league-hub/tests/monthly-vote-choices.php` and
+`php wp-content/plugins/draft-league-hub/tests/monthly-vote-history.php`.
 These checks use WordPress formatting functions and in-memory ballot storage;
 they do not need a running database or change saved site data.
 

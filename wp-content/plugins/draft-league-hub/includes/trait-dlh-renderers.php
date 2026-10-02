@@ -48,28 +48,7 @@ trait DLH_Renderers {
 		ob_start();
 		echo '<div class="dlh-result-grid">';
 		foreach ($questions as $question) {
-			$key = sanitize_key($question['key'] ?? '');
-			$type = $this->normalize_question_type($question['type'] ?? 'text');
-			$counts = array();
-
-			foreach ($votes as $vote) {
-				$value = $vote['answers'][$key]['value'] ?? '';
-				if ('' === $value || 0 === $value) {
-					continue;
-				}
-
-				$label = 'manager' === $type ? $this->manager_name(absint($value)) : sanitize_text_field($value);
-				if ('' === $label) {
-					continue;
-				}
-
-				if (!isset($counts[$label])) {
-					$counts[$label] = 0;
-				}
-				$counts[$label]++;
-			}
-
-			arsort($counts);
+			$counts = $this->vote_question_counts($question, $votes);
 			echo '<div class="dlh-result-card">';
 			echo '<h4>' . esc_html($question['label'] ?? '') . '</h4>';
 			if (empty($counts)) {
@@ -85,6 +64,64 @@ trait DLH_Renderers {
 		}
 		echo '</div>';
 
+		return ob_get_clean();
+	}
+
+
+	private function render_monthly_vote_history() {
+		$history = $this->get_monthly_vote_history();
+		ob_start();
+		?>
+		<section class="dlh-vote-history">
+			<div class="dlh-section__head">
+				<div>
+					<h3><?php echo esc_html__('Past Winners', 'draft-league-hub'); ?></h3>
+					<p><?php echo esc_html__('Every month’s awards and winning quotes. Winners appear here once voting closes.', 'draft-league-hub'); ?></p>
+				</div>
+			</div>
+			<?php if (!$history) : ?>
+				<div class="dlh-empty"><?php echo esc_html__('No past results yet. The first winners will appear here after voting closes.', 'draft-league-hub'); ?></div>
+			<?php else : ?>
+				<div class="dlh-table-wrap">
+					<table class="dlh-table dlh-vote-history__table" role="table" aria-label="<?php echo esc_attr__('Monthly award winners', 'draft-league-hub'); ?>">
+						<thead role="rowgroup"><tr role="row">
+							<th scope="col" role="columnheader"><?php echo esc_html__('Month', 'draft-league-hub'); ?></th>
+							<th scope="col" role="columnheader"><?php echo esc_html__('Award', 'draft-league-hub'); ?></th>
+							<th scope="col" role="columnheader"><?php echo esc_html__('Winner / winning quote', 'draft-league-hub'); ?></th>
+							<th scope="col" role="columnheader"><?php echo esc_html__('Votes', 'draft-league-hub'); ?></th>
+						</tr></thead>
+						<?php foreach ($history as $month) : ?>
+							<tbody role="rowgroup">
+								<?php foreach ($month['awards'] as $award) : ?>
+									<tr role="row">
+										<td role="cell" data-label="<?php echo esc_attr__('Month', 'draft-league-hub'); ?>"><span><?php echo esc_html($month['label']); ?></span></td>
+										<td role="cell" data-label="<?php echo esc_attr__('Award', 'draft-league-hub'); ?>"><strong><?php echo esc_html($award['label']); ?></strong></td>
+										<td role="cell" data-label="<?php echo esc_attr__('Winner', 'draft-league-hub'); ?>">
+											<div class="dlh-vote-history__winners">
+												<?php if (!$award['winners']) : ?>
+													<span class="dlh-vote-history__muted"><?php echo esc_html__('No votes cast', 'draft-league-hub'); ?></span>
+												<?php else : ?>
+													<?php if (count($award['winners']) > 1) : ?><span class="dlh-vote-history__tie"><?php echo esc_html__('Joint winners', 'draft-league-hub'); ?></span><?php endif; ?>
+													<?php foreach ($award['winners'] as $winner) : ?>
+														<?php if ($award['is_quote']) : ?>
+															<blockquote class="dlh-vote-history__quote"><?php echo esc_html($winner); ?></blockquote>
+														<?php else : ?>
+															<span><?php echo esc_html($winner); ?></span>
+														<?php endif; ?>
+													<?php endforeach; ?>
+												<?php endif; ?>
+											</div>
+										</td>
+										<td role="cell" data-label="<?php echo esc_attr__('Votes', 'draft-league-hub'); ?>"><span><?php echo esc_html(count($award['winners']) > 1 ? sprintf(__('%d each', 'draft-league-hub'), $award['votes']) : $award['votes']); ?></span></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						<?php endforeach; ?>
+					</table>
+				</div>
+			<?php endif; ?>
+		</section>
+		<?php
 		return ob_get_clean();
 	}
 

@@ -127,6 +127,7 @@ trait DLH_Shortcodes {
 					<?php echo $this->render_vote_results($questions, $votes); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				</div>
 			<?php endif; ?>
+			<?php echo $this->render_monthly_vote_history(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		</div>
 		<?php
 		return ob_get_clean();

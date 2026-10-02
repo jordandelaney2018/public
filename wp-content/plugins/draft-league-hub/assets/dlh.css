@@ -732,6 +732,121 @@
 	text-transform: uppercase;
 }
 
+.dlh-vote-history {
+	border-top: 1px solid var(--dlh-line);
+	display: grid;
+	gap: 1rem;
+	margin-top: 1rem;
+	min-width: 0;
+	padding-top: 2rem;
+}
+
+.dlh-vote-history .dlh-table-wrap {
+	background: var(--dlh-paper);
+	border: 1px solid var(--dlh-line);
+	border-radius: 8px;
+	margin-top: 0;
+}
+
+.dlh-vote-history__table {
+	min-width: 0;
+	table-layout: fixed;
+}
+
+.dlh-vote-history__table th:nth-child(1) { width: 18%; }
+.dlh-vote-history__table th:nth-child(2) { width: 25%; }
+.dlh-vote-history__table th:nth-child(3) { width: 45%; }
+.dlh-vote-history__table th:nth-child(4) { width: 12%; }
+
+.dlh-vote-history__table td {
+	overflow-wrap: anywhere;
+}
+
+.dlh-vote-history__table tbody + tbody tr:first-child td {
+	border-top: 2px solid var(--dlh-line);
+}
+
+.dlh-vote-history__table tbody:last-child tr:last-child td {
+	border-bottom: 0;
+}
+
+.dlh-vote-history__winners {
+	display: grid;
+	gap: 0.5rem;
+}
+
+.dlh-vote-history__quote {
+	border: 0;
+	border-left: 3px solid var(--dlh-gold);
+	color: var(--dlh-ink);
+	font-size: inherit;
+	font-style: italic;
+	line-height: 1.6;
+	margin: 0;
+	padding: 0.15rem 0 0.15rem 0.75rem;
+}
+
+.dlh-vote-history__tie,
+.dlh-vote-history__muted {
+	color: var(--dlh-muted);
+}
+
+.dlh-vote-history__tie {
+	font-size: 0.8rem;
+	font-weight: 800;
+}
+
+@media (max-width: 640px) {
+	.dlh-vote-history__table,
+	.dlh-vote-history__table tbody {
+		display: block;
+	}
+
+	.dlh-vote-history__table thead {
+		clip-path: inset(50%);
+		height: 1px;
+		overflow: hidden;
+		position: absolute;
+		width: 1px;
+	}
+
+	.dlh-vote-history__table tr {
+		border-bottom: 1px solid var(--dlh-line);
+		display: grid;
+		gap: 0.6rem;
+		padding: 1rem;
+	}
+
+	.dlh-vote-history__table td {
+		border: 0;
+		display: grid;
+		gap: 0.75rem;
+		grid-template-columns: 4rem minmax(0, 1fr);
+		padding: 0;
+	}
+
+	.dlh-vote-history__table td::before {
+		color: var(--dlh-muted);
+		content: attr(data-label);
+		font-size: 0.75rem;
+		font-weight: 800;
+		padding-top: 0.15rem;
+		text-transform: uppercase;
+	}
+
+	.dlh-vote-history__table tbody + tbody tr:first-child td {
+		border-top: 0;
+	}
+
+	.dlh-vote-history__table tbody + tbody {
+		border-top: 1px solid var(--dlh-line);
+	}
+
+	.dlh-vote-history__table tbody:last-child tr:last-child {
+		border-bottom: 0;
+	}
+}
+
 .dlh-availability-pill--yes {
 	background: #e7f5ee;
 	border-color: #b4dec9;
